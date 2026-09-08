@@ -167,7 +167,9 @@ note "proof — the web container carries the new env:"
 docker compose exec -T web sh -c 'echo "   MOOR_TIER=$MOOR_TIER"' 2>/dev/null \
   || docker exec moordemo-web-1 sh -c 'echo "   MOOR_TIER=$MOOR_TIER"'
 note "proof — cache now runs 3 replicas:"
-docker compose ps cache --format '{{.Name}}  {{.State}}' 2>/dev/null || docker ps --filter name=moordemo-cache
+docker ps --filter label=com.docker.compose.service=cache \
+  --filter label=com.docker.compose.project=moordemo \
+  --format '{{.Names}}  {{.Status}}'
 
 banner "DEMO COMPLETE — every act ran against the real Docker Engine"
 note "PRD:      Moor_PRD.pdf (Section 11 maps 1:1 to these acts)"
