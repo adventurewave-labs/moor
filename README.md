@@ -33,11 +33,13 @@ payloads Slack would.
 ![Moor architecture: the reconcile control loop](docs/architecture.png)
 
 **Watch it work** — a live recording of the dashboard (no cuts, no synthetic
-events). Four drifts are injected through the Docker API — a killed container,
-a rogue scale-up, a mutated env var, an image swap — and the console window
-streams the real audit trail as auto mode detects and repairs each one:
+events). The **⚡ Inject drift** button is clicked four times; each click
+performs one real Docker mutation — a killed container, a rogue scale-up, a
+mutated env var, another rogue scale-up — and the console window streams the
+real audit trail as auto mode detects and repairs each one (one drift needs
+a retry after the engine's backoff, and still converges):
 
-![Moor demo: live console window shows drift being detected and auto-repaired in seconds](docs/demo.gif)
+![Moor demo: click ⚡ Inject drift — the console window catches each drift and auto mode repairs it in seconds](docs/demo.gif)
 
 **This repo contains** the full working system, the product spec, and the
 research it was built on:
@@ -46,7 +48,7 @@ research it was built on:
 |---|---|
 | [`docker-compose.yml`](docker-compose.yml), [`control-plane/`](control-plane/), [`drift-injector/`](drift-injector/), [`alert-sink/`](alert-sink/) | The product + demo (all real, runs anywhere Docker 24+ runs) |
 | [`demo/demo.sh`](demo/demo.sh), [`Makefile`](Makefile) | The 5-act narrated end-to-end walkthrough |
-| [`docs/demo.gif`](docs/demo.gif) | Recorded demo footage: the console window catching and repairing live drift |
+| [`docs/demo.gif`](docs/demo.gif) | Recorded demo footage: one-click drift injection from the dashboard, live detection and auto-repair |
 | [`docs/Moor_PRD.pdf`](docs/Moor_PRD.pdf) | The full product requirements document (16 pages) |
 | [`docs/research/`](docs/research/)| The research base: cited stats, sources, and the tooling-gap analysis |
 
