@@ -17,6 +17,27 @@ from .models import (MANAGE_LABEL, OWNED_LABEL, PROJECT_LABEL,
                      ActualContainer, ActualState, DesiredService,
                      PortMapping)
 
+
+def _compose_labels(project: str, service: DesiredService) -> dict[str, str]:
+    """Labels that make a Moor-created container visible to docker compose.
+
+    `docker compose` recognizes its own service containers by the
+    com.docker.compose.config-hash label; without it the container is
+    invisible to `compose ps`/`down` and the next `up` fails on a name
+    conflict. Moor stamps a deterministic spec hash: a mismatch with
+    compose's own hash just means compose recreates the container on the
+    next `up` — compose keeps reconciling its own bookkeeping.
+    """
+    from .actions import spec_config_hash
+
+    return {
+        PROJECT_LABEL: project,
+        "com.docker.compose.service": service.name,
+        "com.docker.compose.config-hash": spec_config_hash(service),
+        MANAGE_LABEL: "true",
+        OWNED_LABEL: "true",
+    }
+
 _name_counter = itertools.count(1)
 
 
@@ -171,44 +192,24 @@ class DockerGateway:
             extra_networks = list(network_names[1:])
 
         container = None
+        create_kwargs = dict(
+            image=service.image,
+            name=name,
+            command=list(service.command) if service.command else None,
+            environment=service.env_list(),
+            labels=_compose_labels(self.project, service),
+            ports=ports_param or None,
+            network=primary_network,
+            detach=True,
+        )
         try:
-            container = self._client.containers.create(
-                image=service.image,
-                name=name,
-                command=list(service.command) if service.command else None,
-                environment=service.env_list(),
-                labels={
-                    PROJECT_LABEL: self.project,
-                    "com.docker.compose.service": service.name,
-                    "com.docker.compose.container-number": str(next(_name_counter)),
-                    MANAGE_LABEL: "true",
-                    OWNED_LABEL: "true",
-                },
-                ports=ports_param or None,
-                network=primary_network,
-                detach=True,
-            )
+            container = self._client.containers.create(**create_kwargs)
         except docker.errors.ImageNotFound:
             # declared image not present locally (e.g. declaration moved
             # to a new tag): pull it, then retry — same behaviour as
             # `docker compose up`.
             self._client.images.pull(service.image)
-            container = self._client.containers.create(
-                image=service.image,
-                name=name,
-                command=list(service.command) if service.command else None,
-                environment=service.env_list(),
-                labels={
-                    PROJECT_LABEL: self.project,
-                    "com.docker.compose.service": service.name,
-                    "com.docker.compose.container-number": str(next(_name_counter)),
-                    MANAGE_LABEL: "true",
-                    OWNED_LABEL: "true",
-                },
-                ports=ports_param or None,
-                network=primary_network,
-                detach=True,
-            )
+            container = self._client.containers.create(**create_kwargs)
         for net in extra_networks:
             try:
                 self._client.api.connect_container_to_network(container.id, net)
@@ -231,7 +232,7 @@ class DockerGateway:
             state=(attrs.get("State") or {}).get("Status", "created"),
             labels=dict(refreshed.labels or {}),
             networks=tuple((attrs.get("NetworkSettings") or {}).get("Networks", {}).keys()),
-            created=float(attrs.get("Created", 0) or 0),
+            created=_parse_created(attrs.get("Created", 0)),
         )
 
     def resolve_networks(self, service: DesiredService) -> tuple[str, ...]:

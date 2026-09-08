@@ -70,6 +70,9 @@ note "CLI verbs:   make status | plan | apply | watch | chaos"
 note "resetting any previous run..."
 docker compose stop moor >/dev/null 2>&1 || true
 docker compose down -v --remove-orphans >/dev/null 2>&1 || true
+# Sweep any project containers compose cannot see (pre-config-hash fix
+# or mid-teardown recreations) straight through the engine API.
+docker ps -aq --filter label=com.docker.compose.project=moordemo | xargs -r docker rm -f >/dev/null 2>&1 || true
 
 # ------------------------------------------------------------------ act 1
 act "ACT 1 — Baseline: the world as declared"

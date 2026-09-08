@@ -49,6 +49,24 @@ def test_kill_produces_start_action_for_matching_dead_container(gateway):
     assert [e[0] for e in out] == ["action.ok"]
 
 
+def test_killed_container_with_image_default_command_is_restarted(gateway):
+    # Real Docker records the image default command on every container;
+    # the planner must restart the killed container instead of stacking a
+    # new one (caught live in a Codespace against Docker Engine 29).
+    for r in gateway.containers.values():
+        if not r["command"]:
+            r["command"] = list(gateway.image_cmd(r["image"]) or ())
+    gateway.kill("web")
+    desired = _desired()
+    actual = gateway.list_containers()
+    report = diff_states(
+        desired, actual, gateway.image_env, image_cmd_fn=gateway.image_cmd
+    )
+    plan = build_plan(desired, actual, report, image_cmd_fn=gateway.image_cmd)
+    assert [a.kind for a in plan.actions] == [ACTION_START]
+    assert plan.actions[0].service == "web"
+
+
 def test_rogue_replicas_produce_removals(gateway):
     gateway.add_rogue("cache", 3)
     desired = _desired()

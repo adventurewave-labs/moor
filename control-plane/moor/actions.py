@@ -8,6 +8,8 @@ outcome.
 """
 from __future__ import annotations
 
+import hashlib
+import json
 from typing import Callable
 
 from .models import (ACTION_CREATE, ACTION_REMOVE, ACTION_START,
@@ -27,6 +29,7 @@ def build_plan(
     desired: DesiredState,
     actual: ActualState,
     report: DriftReport,
+    image_cmd_fn=None,
 ) -> ActionPlan:
     actions: list[Action] = []
 
@@ -85,7 +88,7 @@ def build_plan(
             dead = [c for c in containers if not c.is_live]
             matching_dead = [
                 c for c in dead
-                if _spec_matches(svc, c)
+                if _spec_matches(svc, c, image_cmd_fn)
             ]
             for c in matching_dead[:missing]:
                 actions.append(Action(
@@ -115,7 +118,13 @@ def build_plan(
     return ActionPlan(actions=tuple(actions))
 
 
-def _spec_matches(svc, container: ActualContainer) -> bool:
+def _spec_matches(svc, container: ActualContainer, image_cmd_fn=None) -> bool:
+    """Would restarting this (stopped) container satisfy the declaration?
+
+    An undeclared command means "the image default": a container created
+    by compose carries the image's default Cmd, and that must still count
+    as matching so the planner restarts it instead of stacking new ones.
+    """
     from .compose import normalize_image
 
     if normalize_image(svc.image) != normalize_image(container.image):
@@ -126,8 +135,40 @@ def _spec_matches(svc, container: ActualContainer) -> bool:
     desired_cmd = list(svc.command) if svc.command else None
     actual_cmd = list(container.command) if container.command else None
     if desired_cmd != actual_cmd:
+        if desired_cmd is None and image_cmd_fn is not None:
+            try:
+                image_default = list(image_cmd_fn(container.image) or [])
+            except Exception:
+                image_default = None
+            if image_default is not None and actual_cmd == image_default:
+                return True  # image default command: matches
         return False
     return True
+
+
+def spec_config_hash(service: DesiredService) -> str:
+    """Stable config-hash label for containers Moor creates.
+
+    `docker compose` recognizes its service containers by the
+    com.docker.compose.config-hash label: without it, compose ps/down
+    ignore the container and the next `up` fails on the name conflict.
+    Moor stamps a deterministic hash of the desired spec; a mismatch with
+    compose's own hash simply means compose recreates the container on
+    the next `up` — i.e. compose keeps reconciling its own bookkeeping.
+    """
+    canonical = json.dumps(
+        {
+            "image": service.image,
+            "command": list(service.command) if service.command else None,
+            "environment": sorted(service.env_list()),
+            "ports": sorted(
+                (pm.container_port, pm.host_port, pm.protocol)
+                for pm in service.ports
+            ),
+        },
+        sort_keys=True,
+    )
+    return "moor-" + hashlib.sha1(canonical.encode()).hexdigest()[:12]
 
 
 def execute_plan(

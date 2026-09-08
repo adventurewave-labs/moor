@@ -182,7 +182,10 @@ class Reconciler:
     def planned_actions(self) -> dict:
         """What auto mode *would* do right now (terraform-style plan)."""
         desired, actual, report = self._observe()
-        plan = build_plan(desired, actual, report)
+        plan = build_plan(
+            desired, actual, report,
+            image_cmd_fn=getattr(self.gateway, "image_cmd", None),
+        )
         return {**plan.to_json(), "mode": self.store.get_mode()}
 
     # ------------------------------------------------------------ the loop
@@ -279,7 +282,13 @@ class Reconciler:
                 if not self.store.in_backoff(s)
             ]
             if actionable:
-                plan = self._filter_plan(build_plan(desired, actual, report), actionable)
+                plan = self._filter_plan(
+                    build_plan(
+                        desired, actual, report,
+                        image_cmd_fn=getattr(self.gateway, "image_cmd", None),
+                    ),
+                    actionable,
+                )
                 summary = execute_plan(self.gateway, plan, self.emit)
                 result["actions"] = summary
 

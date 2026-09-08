@@ -181,6 +181,7 @@ class FakeGateway:
             "labels": {
                 PROJECT_LABEL: self.project,
                 "com.docker.compose.service": service.name,
+                "com.docker.compose.config-hash": f"moor-fake-{service.name}",
                 MANAGE_LABEL: "true",
                 OWNED_LABEL: "true",
             },
