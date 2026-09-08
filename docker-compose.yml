@@ -56,10 +56,11 @@ services:
   moor-db:
     image: postgres:16-alpine
     environment:
+      POSTGRES_USER: moor
       POSTGRES_PASSWORD: moor
       POSTGRES_DB: moor
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U moor"]
       interval: 2s
       timeout: 3s
       retries: 30
