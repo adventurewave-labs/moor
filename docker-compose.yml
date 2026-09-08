@@ -75,8 +75,12 @@ services:
     volumes:
       # The Docker socket is the source of ACTUAL state.
       - /var/run/docker.sock:/var/run/docker.sock
-      # This compose file, read-only, is the source of DESIRED state.
-      - ./docker-compose.yml:/desired-state/docker-compose.yml:ro
+      # The declaration, read-only. Mounted as the DIRECTORY, not the
+      # file: in-place rewrites (sed -i, editors, a CD checkout) replace
+      # the file's inode, and a direct file mount would keep showing the
+      # original forever — the intended-change demo depends on the new
+      # declaration becoming visible to the control plane.
+      - .:/desired-state:ro
     environment:
       MOOR_PROJECT: moordemo
       MOOR_COMPOSE: /desired-state/docker-compose.yml

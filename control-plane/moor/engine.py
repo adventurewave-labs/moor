@@ -113,7 +113,9 @@ class Reconciler:
                 self.run_once()
             except Exception as exc:  # noqa: BLE001 — the loop must never die
                 try:
-                    self.emit(ENGINE_ERROR, None, "error", {"error": str(exc)})
+                    self.emit(ENGINE_ERROR, None, "error", {
+                        "error": f"{type(exc).__name__}: {exc}",
+                    })
                 except Exception:
                     pass
             self._stop.wait(self.config.interval)

@@ -193,9 +193,11 @@ default — add `moor.manage: "false"` to anything Moor should not touch):
     image: ghcr.io/moor/moor:1.0        # or build ./control-plane
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - ${PWD}/docker-compose.yml:/desired-state/docker-compose.yml:ro
+      - ${PWD}:/desired-state:ro        # directory, not the file: in-place
+                                        # rewrites must stay visible to moor
     environment:
       MOOR_PROJECT: ${COMPOSE_PROJECT_NAME:-yourproject}
+      MOOR_COMPOSE: /desired-state/docker-compose.yml
       MOOR_MODE: advise
       MOOR_ALERT_WEBHOOK: ${MOOR_ALERT_WEBHOOK:-}
     ports: ["8080:8080"]
