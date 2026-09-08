@@ -64,6 +64,13 @@ note "dashboard:   http://localhost:8080     ← open this now"
 note "alert sink:  http://localhost:9099"
 note "CLI verbs:   make status | plan | apply | watch | chaos"
 
+# Reset any previous run. The reconciler is stopped FIRST: a live control
+# plane will re-create workloads while compose is tearing them down (the
+# same controller-vs-teardown race Kubernetes solves with finalizers).
+note "resetting any previous run..."
+docker compose stop moor >/dev/null 2>&1 || true
+docker compose down -v --remove-orphans >/dev/null 2>&1 || true
+
 # ------------------------------------------------------------------ act 1
 act "ACT 1 — Baseline: the world as declared"
 docker compose up -d

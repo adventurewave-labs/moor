@@ -8,7 +8,7 @@ CLI := $(COMPOSE) exec -T moor moor
 .DEFAULT_GOAL := help
 
 .PHONY: help setup up down reset status plan apply watch mode-auto mode-advise \
-        chaos chaos-kill chaos-scale chaos-env chaos-image demo logs test urls clean
+	chaos chaos-kill chaos-scale chaos-env chaos-image demo logs test urls clean
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-14s\033[0m %s\n", $$1, $$2}'
@@ -28,7 +28,8 @@ up: ## Start the full stack in the background
 down: ## Stop the stack (keeps volumes)
 	$(COMPOSE) down
 
-reset: ## Full reset: stop everything, drop volumes, start again
+reset: ## Full reset: stop the reconciler first, drop volumes, start again
+	$(COMPOSE) stop moor || true
 	$(COMPOSE) down -v --remove-orphans
 	@sleep 2
 	$(COMPOSE) up -d
