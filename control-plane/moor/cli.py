@@ -238,7 +238,7 @@ def mode(new_mode: Optional[str] = typer.Argument(None)) -> None:
 
 
 @app.command()
-def events(limit: int = 30) -> None:
+def events(limit: int = typer.Argument(30, help="Number of events to show")) -> None:
     """Show recent audit-trail events."""
     rows = _get("/api/events", params={"limit": limit})["events"]
     for row in rows:
