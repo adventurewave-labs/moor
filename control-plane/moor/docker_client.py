@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import itertools
 import time
+from datetime import datetime
 
 import docker
 
@@ -17,6 +18,21 @@ from .models import (MANAGE_LABEL, OWNED_LABEL, PROJECT_LABEL,
                      PortMapping)
 
 _name_counter = itertools.count(1)
+
+
+def _parse_created(value: object) -> float:
+    """Docker Engine API >= 1.48 (Docker 29) returns `Created` as an RFC 3339
+    string; older engines returned a unix epoch float. Accept both."""
+    if isinstance(value, (int, float)):
+        return float(value)
+    if isinstance(value, str):
+        try:
+            return datetime.fromisoformat(
+                value.replace("Z", "+00:00")
+            ).timestamp()
+        except ValueError:
+            return 0.0
+    return 0.0
 
 
 class DockerGateway:
@@ -68,7 +84,7 @@ class DockerGateway:
                     state=state,
                     labels=dict(c.labels or {}),
                     networks=tuple((network_settings.get("Networks") or {}).keys()),
-                    created=float(attrs.get("Created", 0) or 0),
+                    created=_parse_created(attrs.get("Created", 0)),
                 )
             )
         return ActualState(project=self.project, containers=tuple(observed))
