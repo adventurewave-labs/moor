@@ -212,6 +212,68 @@ class FakeGateway:
             idx += 1
         return idx
 
+    # ------------------------------------------------------ chaos surface
+
+    def kill_container(self, container_id: str) -> None:
+        """docker kill: the container stays dead."""
+        record = self.containers[container_id]
+        if record["state"] != "running":
+            raise RuntimeError(f"container {record['name']} is not running")
+        record["state"] = "exited"
+
+    def list_local_images(self) -> list[str]:
+        return sorted(IMAGE_ENVS.keys())
+
+    def recreate_container(
+        self, container_id: str, *, image: str | None = None,
+        env_overrides: dict[str, str] | None = None,
+    ):
+        """Stop+remove, recreate same name with modified config.
+
+        Mirrors the real gateway: an image swap drops the old image's
+        command so the new image runs its own default.
+        """
+        record = self.containers.pop(container_id)
+        if image:
+            record["image"] = image
+            record["command"] = None
+        if env_overrides:
+            record["env"] = {**record["env"], **env_overrides}
+        record["id"] = _next_id()
+        record["created"] = time.time()
+        self.containers[record["id"]] = record
+        return self._to_actual(record)
+
+    def spawn_replica(self, container_id: str, name: str):
+        """Extra copy of a container under `name` (rogue scaling)."""
+        source = self.containers[container_id]
+        record = {
+            **source,
+            "id": _next_id(),
+            "name": name,
+            "env": dict(source["env"]),
+            "labels": dict(source["labels"]),
+            "ports": {},
+            "networks": tuple(source["networks"]),
+            "state": "running",
+            "created": time.time(),
+        }
+        self.containers[record["id"]] = record
+        return self._to_actual(record)
+
+    def _to_actual(self, record: dict) -> ActualContainer:
+        ports = frozenset(
+            PortMapping(int(key.split("/")[0]), host, key.split("/")[1] if "/" in key else "tcp")
+            for key, host in record["ports"].items()
+        )
+        return ActualContainer(
+            id=record["id"], name=record["name"], service=record["service"],
+            image=record["image"], env=dict(record["env"]),
+            command=tuple(record["command"]) if record["command"] else None,
+            ports=ports, state=record["state"], labels=dict(record["labels"]),
+            networks=tuple(record["networks"]), created=record["created"],
+        )
+
     # --------------------------------------------------- scenario helpers
 
     def kill(self, service: str) -> None:

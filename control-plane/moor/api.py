@@ -15,6 +15,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel
 
+from .chaos import ChaosError, ChaosInjector
 from .config import MoorConfig
 from .docker_client import DockerGateway
 from .engine import Reconciler
@@ -27,12 +28,18 @@ class ModeRequest(BaseModel):
     mode: str
 
 
+class ChaosRequest(BaseModel):
+    action: str = "random"
+    service: str | None = None
+
+
 def create_app(
     config: MoorConfig | None = None,
     gateway: DockerGateway | None = None,
     store: EventStore | None = None,
     alerter: WebhookAlerter | None = None,
     engine: Reconciler | None = None,
+    injector: ChaosInjector | None = None,
     start_engine: bool = True,
 ) -> FastAPI:
     """Assemble the app. All dependencies are injectable for tests."""
@@ -43,6 +50,7 @@ def create_app(
     gateway = gateway or DockerGateway(config.project)
     alerter = alerter or WebhookAlerter(config.webhook_url)
     engine = engine or Reconciler(config, gateway, store, alerter)
+    injector = injector or ChaosInjector(gateway, store, engine.compose, config.project)
 
     @asynccontextmanager
     async def _lifespan(app: FastAPI):
@@ -64,6 +72,7 @@ def create_app(
     app.state.store = store
     app.state.engine = engine
     app.state.gateway = gateway
+    app.state.injector = injector
 
     # ------------------------------------------------------------------ ui
 
@@ -115,6 +124,22 @@ def create_app(
     async def reconcile() -> dict:
         result = await asyncio.to_thread(engine.run_once)
         return result
+
+    @app.post("/api/chaos")
+    async def chaos(body: ChaosRequest | None = None) -> dict:
+        """Inject one REAL drift (kill / scale / env / image swap).
+
+        The mutation hits the Docker Engine directly; the reconciler
+        then has to detect (and, in auto mode, repair) it like any
+        other drift. Audited as a `chaos.injected` event.
+        """
+        request = body or ChaosRequest()
+        try:
+            return await asyncio.to_thread(injector.inject, request.action, request.service)
+        except ChaosError as exc:
+            raise HTTPException(status_code=exc.status, detail=str(exc))
+        except Exception as exc:  # docker-level failure
+            raise HTTPException(status_code=502, detail=f"chaos failed: {exc}")
 
     @app.get("/api/stream")
     async def stream() -> StreamingResponse:

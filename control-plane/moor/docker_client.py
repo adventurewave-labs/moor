@@ -158,6 +158,112 @@ class DockerGateway:
 
     # ------------------------------------------------------------ mutate
 
+    def kill_container(self, container_id: str) -> None:
+        """docker kill: SIGKILL one container. It stays dead (workloads
+        run without restart policies — that absence IS the drift)."""
+        self._client.containers.get(container_id).kill()
+
+    def list_local_images(self) -> list[str]:
+        """Normalized tags of every image present on the host."""
+        out: set[str] = set()
+        try:
+            for image in self._client.images.list():
+                for tag in image.tags or []:
+                    out.add(normalize_image(tag))
+        except docker.errors.DockerException:
+            pass
+        return sorted(out)
+
+    def recreate_container(
+        self,
+        container_id: str,
+        *,
+        image: str | None = None,
+        env_overrides: dict[str, str] | None = None,
+    ) -> ActualContainer:
+        """Stop+remove a container, then recreate it with modified config.
+
+        This is the classic operator "hand-fix": the container comes back
+        under the same name, on the same networks, with the same labels —
+        but slightly wrong (different image, mutated env). Exactly the
+        drift a control plane exists to catch.
+        """
+        container = self._client.containers.get(container_id)
+        attrs = container.attrs
+        config = attrs.get("Config") or {}
+        labels = dict(config.get("Labels") or {})
+        networks = list((attrs.get("NetworkSettings") or {}).get("Networks", {}).keys())
+        name = (container.name or "").lstrip("/")
+
+        env = list(config.get("Env") or [])
+        if env_overrides:
+            for key, value in env_overrides.items():
+                env = [e for e in env if not e.startswith(key + "=")]
+                env.append(f"{key}={value}")
+
+        # An image swap must not inherit the OLD image's command: the
+        # copied Cmd is the source image's default (e.g. nginx's
+        # "nginx -g daemon off;"), which does not exist in the new
+        # image and makes the container unstartable. Docker's own
+        # behaviour on `docker run <new-image>` is to run the new
+        # image's default command — mirror that.
+        command = None
+        if image is None or normalize_image(str(image)) == normalize_image(
+            str(config.get("Image") or "")
+        ):
+            command = config.get("Cmd")
+
+        ports = self._ports_from_attrs(attrs)
+        container.stop(timeout=2)
+        container.remove(force=True)
+
+        new = self._client.containers.create(
+            image=image or config.get("Image"),
+            name=name,
+            command=command,
+            environment=env,
+            labels=labels,
+            ports=ports or None,
+            detach=True,
+            network=networks[0] if networks else None,
+        )
+        for net in networks[1:]:
+            try:
+                self._client.api.connect_container_to_network(new.id, net)
+            except docker.errors.APIError:
+                pass  # already attached
+        new.start()
+        return self._refresh_actual(new)
+
+    def spawn_replica(self, container_id: str, name: str) -> ActualContainer:
+        """Create and start an extra copy of a container under `name`.
+
+        Rogue replicas carry the same labels (so they count as members
+        of the service) but no host port bindings — matching what a
+        rogue `docker run` with hand-stamped labels would produce.
+        """
+        container = self._client.containers.get(container_id)
+        attrs = container.attrs
+        config = attrs.get("Config") or {}
+        labels = dict(config.get("Labels") or {})
+        networks = list((attrs.get("NetworkSettings") or {}).get("Networks", {}).keys())
+        new = self._client.containers.create(
+            image=config.get("Image"),
+            name=name,
+            command=config.get("Cmd"),
+            environment=list(config.get("Env") or []),
+            labels=labels,
+            detach=True,
+            network=networks[0] if networks else None,
+        )
+        for net in networks[1:]:
+            try:
+                self._client.api.connect_container_to_network(new.id, net)
+            except docker.errors.APIError:
+                pass  # already attached
+        new.start()
+        return self._refresh_actual(new)
+
     def remove(self, container_id: str, force: bool = True) -> None:
         container = self._client.containers.get(container_id)
         try:
@@ -216,7 +322,13 @@ class DockerGateway:
             except docker.errors.APIError:
                 pass  # already attached
         container.start()
+        return self._refresh_actual(container, service=service.name)
 
+    def _refresh_actual(
+        self, container, service: str | None = None
+    ) -> ActualContainer:
+        """Re-read one container from the engine and convert it to the
+        domain model (used after create/recreate/spawn mutations)."""
         refreshed = self._client.containers.get(container.id)
         attrs = refreshed.attrs
         config = attrs.get("Config") or {}
@@ -224,7 +336,7 @@ class DockerGateway:
         return ActualContainer(
             id=refreshed.id,
             name=refreshed.name.lstrip("/"),
-            service=service.name,
+            service=service or (refreshed.labels or {}).get("com.docker.compose.service", ""),
             image=normalize_image(str(config.get("Image") or "")),
             env=_parse_env(config.get("Env") or []),
             command=tuple(config.get("Cmd") or ()) or None,
@@ -234,6 +346,19 @@ class DockerGateway:
             networks=tuple((attrs.get("NetworkSettings") or {}).get("Networks", {}).keys()),
             created=_parse_created(attrs.get("Created", 0)),
         )
+
+    @staticmethod
+    def _ports_from_attrs(attrs: dict) -> dict:
+        """HostConfig.PortBindings -> docker-py create() ports param."""
+        bindings = (attrs.get("HostConfig") or {}).get("PortBindings") or {}
+        out: dict[int, int] = {}
+        for key, hosts in bindings.items():
+            port = int(str(key).split("/")[0])
+            if hosts:
+                host_port = int(hosts[0].get("HostPort", 0) or 0)
+                if host_port:
+                    out[port] = host_port
+        return out
 
     def resolve_networks(self, service: DesiredService) -> tuple[str, ...]:
         """Map declared network names to engine network names."""

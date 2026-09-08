@@ -54,6 +54,9 @@
     padding: 6px 14px; border-radius: 4px; font-size: 13px; font-weight: 600;
   }
   .btn:hover { background: var(--accent); }
+  .btn:disabled { opacity: .55; cursor: default; }
+  .btn.danger { background: #8f3540; }
+  .btn.danger:hover { background: var(--red); }
   .btn.ghost { background: transparent; border: 1px solid var(--line); color: var(--muted); }
   .btn.ghost:hover { color: var(--text); border-color: var(--accent); }
   .conn { font-family: var(--mono); font-size: 11px; color: var(--muted); }
@@ -218,6 +221,7 @@
   <span class="mode-chip advise" id="mode-chip">ADVISE</span>
   <button class="btn" id="mode-btn" title="Switch reconciliation mode">Arm auto-remediation</button>
   <button class="btn ghost" id="reconcile-btn" title="Run one reconcile cycle now">Reconcile now</button>
+  <button class="btn danger" id="chaos-btn" title="Inject one random drift — kill a container, spawn rogue replicas, mutate env, or swap image. Real Docker mutations: Moor must then catch it.">⚡ Inject drift</button>
   <span class="conn" id="conn"><span class="led"></span><span id="conn-text">connecting…</span></span>
 </header>
 
@@ -358,7 +362,10 @@ async function backfillConsole() {
     const evs = d.events || [];
     if (evs.length) {
       appendLine(sepLine(`── audit trail · last ${evs.length} events (newest at bottom) ──`));
-      evs.forEach(e => appendLine(eventLine(e, true)));
+      evs.forEach(e => {
+        appendLine(eventLine(e, true));
+        if (e.id > lastSeenId) lastSeenId = e.id;
+      });
     } else {
       appendLine(sepLine('── no events yet · the engine will speak when drift happens ──'));
     }
@@ -439,15 +446,58 @@ function render(s) {
   }).join('') || '<div class="empty">no managed services</div>';
 }
 
-/* ================= SSE -> console ================= */
-const evtSource = new EventSource('/api/stream');
-evtSource.onopen = () => { $('conn').className = 'conn ok'; };
-evtSource.onerror = () => { $('conn').className = 'conn err'; $('conn-text').textContent = 'stream lost'; };
-evtSource.onmessage = (ev) => handleEvent(JSON.parse(ev.data));
-['drift.detected', 'drift.resolved', 'converge.planned', 'drift.persistent',
- 'action.ok', 'action.failed', 'mode.changed', 'alert.sent', 'engine.started'].forEach(t => {
-  evtSource.addEventListener(t, (ev) => handleEvent(JSON.parse(ev.data)));
-});
+/* ================= events -> console =================
+   Two paths, one funnel: SSE for sub-second latency, and a 2s polling
+   catch-up on /api/events as the reliability net. Intermediaries
+   (shared web forwards, buffering proxies) can silently starve a
+   long-lived SSE stream while the browser still shows it "open" —
+   the poll path guarantees delivery (dedup by event id), and a
+   watchdog re-opens the stream when it goes quiet. */
+const EVENT_TYPES = ['drift.detected', 'drift.resolved', 'converge.planned',
+ 'drift.persistent', 'action.ok', 'action.failed', 'mode.changed', 'alert.sent',
+ 'alert.failed', 'engine.started', 'engine.error', 'chaos.injected'];
+
+let lastSeenId = 0;
+let lastSseDelivery = 0;
+let evtSource = null;
+
+function deliverEvent(row) {
+  if (!row || !(row.id > lastSeenId)) return;
+  lastSeenId = row.id;
+  handleEvent(row);
+}
+
+function sseConnect() {
+  if (evtSource) evtSource.close();
+  lastSseDelivery = Date.now();
+  evtSource = new EventSource('/api/stream');
+  evtSource.onopen = () => { $('conn').className = 'conn ok'; };
+  evtSource.onerror = () => { $('conn').className = 'conn err'; $('conn-text').textContent = 'stream lost'; };
+  evtSource.onmessage = (ev) => {
+    try { deliverEvent(JSON.parse(ev.data)); } catch (e) {}
+  };
+  EVENT_TYPES.forEach(t => {
+    evtSource.addEventListener(t, (ev) => {
+      try {
+        const row = JSON.parse(ev.data);
+        lastSseDelivery = Date.now();
+        deliverEvent(row);
+      } catch (e) {}
+    });
+  });
+}
+
+async function catchUpEvents() {
+  try {
+    const r = await fetch('/api/events?limit=50&since=' + lastSeenId);
+    const rows = (await r.json()).events || [];
+    if (!rows.length) return;
+    rows.forEach(deliverEvent);
+    /* events happened but SSE stayed silent for 15s — the stream is
+       starved; re-open it so the fast path comes back. */
+    if (Date.now() - lastSseDelivery > 15000) sseConnect();
+  } catch (e) {}
+}
 
 function handleEvent(row) {
   appendLine(eventLine(row, false));
@@ -491,6 +541,47 @@ $('reconcile-btn').onclick = async () => {
   refresh();
 };
 
+/* ================= chaos ================= */
+function noteLine(sev, note) {
+  const div = document.createElement('div');
+  div.className = 'cline sev-' + sev;
+  div.innerHTML =
+    `<span class="cts">${esc(new Date().toLocaleTimeString([], {hour12: false}))}</span>` +
+    `<span class="ctype">chaos</span>` +
+    `<span class="csvc">—</span>` +
+    `<span class="cnote">${esc(note)}</span>`;
+  appendLine(div);
+}
+
+let chaosBusy = false;
+$('chaos-btn').onclick = async () => {
+  if (chaosBusy) return;
+  chaosBusy = true;
+  const btn = $('chaos-btn');
+  btn.disabled = true;
+  btn.textContent = 'Injecting…';
+  cmdLine('chaos random');
+  try {
+    const r = await fetch('/api/chaos', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({action: 'random'})
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.detail || ('HTTP ' + r.status));
+    if (state && state.mode !== 'auto') {
+      noteLine('warning', 'mode is advise — Moor will detect this drift but not repair it');
+    }
+  } catch (e) {
+    noteLine('error', e.message || 'chaos request failed');
+  }
+  setTimeout(() => {
+    btn.disabled = false;
+    btn.textContent = '⚡ Inject drift';
+    chaosBusy = false;
+    refresh();
+  }, 3000);
+};
+
 /* ================= boot ================= */
 fetch('/api/health').then(r => r.json()).then(h => {
   $('footer-docker').textContent = h.docker && h.docker.ok
@@ -501,7 +592,8 @@ fetch('/api/health').then(r => r.json()).then(h => {
 initConsole();
 refresh();
 backfillConsole();
-setInterval(refresh, 2000);
+sseConnect();
+setInterval(() => { refresh(); catchUpEvents(); }, 2000);
 </script>
 </body>
 </html>

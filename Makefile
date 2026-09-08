@@ -82,7 +82,7 @@ logs: ## Follow moor control-plane logs
 
 test: ## Run the control-plane test suite (offline, uses test doubles)
 	$(COMPOSE) build moor >/dev/null
-	$(COMPOSE) run --rm --no-deps moor pytest tests -q
+	$(COMPOSE) run --rm --no-deps --entrypoint pytest moor tests -q
 
 demo: ## Full narrated end-to-end demo (5 acts, ~3 minutes)
 	@bash demo/demo.sh

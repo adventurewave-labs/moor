@@ -7,6 +7,7 @@
     moor watch        follow live events
     moor mode         show or set advise/auto
     moor events       recent audit trail
+    moor chaos        inject one real drift (the dashboard button, as a verb)
 """
 from __future__ import annotations
 
@@ -243,6 +244,32 @@ def events(limit: int = typer.Argument(30, help="Number of events to show")) -> 
     rows = _get("/api/events", params={"limit": limit})["events"]
     for row in rows:
         _print_event(row)
+
+
+@app.command()
+def chaos(
+    action: str = typer.Argument(
+        "random", help="kill | scale | env | image | random"
+    ),
+    service: Optional[str] = typer.Option(
+        None, "--service", "-s", help="Target service (default: auto-pick)"
+    ),
+) -> None:
+    """Inject one REAL drift: the dashboard button, as a CLI verb."""
+    state = _get("/api/state")
+    if state["mode"] != "auto":
+        console.print(
+            "[yellow]mode is ADVISE — Moor will detect this drift, not repair it.[/yellow]\n"
+        )
+    result = _post("/api/chaos", {"action": action, "service": service})
+    console.print(
+        f"[bold cyan]chaos[/bold cyan] {result['action']} -> "
+        f"[b]{result.get('service', '-')}[/b]\n"
+        f"  {result['detail']}"
+    )
+    console.print(
+        "\n[dim]watch it: [b]moor watch[/b] · diff now: [b]moor plan[/b][/dim]"
+    )
 
 
 # ------------------------------------------------------------------ output

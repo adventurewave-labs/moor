@@ -66,9 +66,15 @@ The demo prints everything to the terminal. While it runs, open:
 
 | URL | What |
 |---|---|
-| http://localhost:8080 | **Moor dashboard** — live service compliance, drift timeline, audit |
+| http://localhost:8080 | **Moor dashboard** — live service compliance, drift timeline, audit · **`⚡ Inject drift`** button injects a real drift for you to watch Moor catch |
 | http://localhost:9099 | **Alert sink** — the Slack-format webhook cards Moor emits |
 | http://localhost:8081 | The managed `web` workload (nginx) |
+
+The chaos button performs real Docker Engine mutations (kill a container,
+spawn rogue replicas, mutate env, swap image) — nothing simulated — and every
+injection is audited as a `chaos.injected` event before the detect → alert →
+repair chain plays out in the console. In advise mode Moor detects but does
+not repair, exactly like real drift.
 
 On any machine with Docker 24+ and `make`: same two commands.
 
@@ -115,13 +121,15 @@ make mode-auto     # arm auto-remediation
 make mode-advise   # detect + alert only
 make chaos         # inject one random drift (kill/scale/env/image)
 make logs          # control-plane logs
-make test          # the offline test suite (43 tests)
+make test          # the offline test suite (63 tests)
 make reset         # down -v && up
 ```
 
 The CLI runs inside the `moor` container (`docker compose exec moor moor …`),
 which talks to the control-plane API — the same kubectl-style client/server
-split as Kubernetes.
+split as Kubernetes. `moor chaos [kill|scale|env|image|random]` is the
+console twin of the dashboard button: same API endpoint, same real Docker
+mutations, same audit trail.
 
 ## How it works
 
@@ -176,6 +184,7 @@ PagerDuty, or the included `alert-sink` — the payload is identical.
 | `GET /api/stream` | SSE event stream (live timeline) |
 | `POST /api/mode` | `{"mode": "advise"\|"auto"}` |
 | `POST /api/reconcile` | run one reconcile cycle now |
+| `POST /api/chaos` | inject one real drift: `{"action": "kill"\|"scale"\|"env"\|"image"\|"random", "service": "…"}` — powers the dashboard button and `moor chaos` |
 
 Interactive docs at http://localhost:8080/docs (FastAPI).
 
@@ -222,11 +231,12 @@ make test    # runs inside the moor container, no Docker daemon needed:
              # implements the exact DockerGateway interface
 ```
 
-43 tests cover: compose parsing, every drift kind (replicas, image, env,
+63 tests (incl. 15 chaos + 1 interface-conformance) cover: compose parsing, every drift kind (replicas, image, env,
 command, ports, orphaned services), planner/executor semantics (order,
 labels, recreate-with-declared-env), the full engine (advise vs auto,
 classification, dedupe, backoff, persistence, thread lifecycle), the API
-surface, and the Slack alert payload format. CI-ready via
+surface, the Slack alert payload format, and the chaos path (every action →
+its drift kind, audit trail, advise/auto behavior, rejections). CI-ready via
 `control-plane/pyproject.toml`.
 
 ## Repository layout
