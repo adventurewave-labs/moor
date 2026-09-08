@@ -1,0 +1,20 @@
+[
+  {
+    "url": "https://www.reddit.com/r/sysadmin/comments/5uwwjo/opinions_ansible_vs_puppet_vs_chef",
+    "name": "(Opinions) Ansible vs Puppet vs Chef : r/sysadmin",
+    "snippet": "Another large problem with Ansible is that using no agent encourages is configuration drift . This also goes hand and hand with the problem of ...",
+    "host_name": "www.reddit.com",
+    "rank": 0,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://curatepartners.com/tech-skills-tools-platforms/optimizing-it-infrastructure-with-puppet-automation-consistency-and-expert-talent",
+    "name": "Puppet: Guide to Optimizing IT Infrastructure",
+    "snippet": "Puppet provides detailed reporting and logging features , which are crucial for tracking changes, monitoring system compliance, and troubleshooting issues. Read more",
+    "host_name": "curatepartners.com",
+    "rank": 1,
+    "date": "",
+    "favicon": ""
+  }
+]

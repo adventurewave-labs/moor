@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Moor — Desired-State Control Plane</title>
+<style>
+  :root {
+    --bg: #0a1628;
+    --panel: #101d31;
+    --panel-2: #13223a;
+    --line: #1e3350;
+    --accent: #4da8da;
+    --accent-2: #2d7ab3;
+    --text: #e8f0f8;
+    --muted: #7a9bb8;
+    --red: #e05260;
+    --green: #3fb68b;
+    --amber: #e0a34e;
+    --mono: 'SFMono-Regular', ui-monospace, Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: -apple-system, 'Segoe UI', Roboto, 'Inter', sans-serif;
+    font-size: 14px; min-height: 100vh;
+  }
+  a { color: var(--accent); }
+
+  /* ---------- top bar ---------- */
+  header {
+    display: flex; align-items: center; gap: 18px;
+    padding: 14px 22px; border-bottom: 1px solid var(--line);
+    background: linear-gradient(180deg, #0d1c33 0%, var(--bg) 100%);
+    position: sticky; top: 0; z-index: 10;
+  }
+  .brand { display: flex; align-items: baseline; gap: 10px; }
+  .brand .name { font-size: 20px; font-weight: 800; letter-spacing: 4px; color: var(--text); }
+  .brand .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent);
+                box-shadow: 0 0 12px var(--accent); display: inline-block; }
+  .brand .tag { color: var(--muted); font-size: 12px; }
+  .spacer { flex: 1; }
+
+  .mode-chip {
+    font-family: var(--mono); font-size: 12px; padding: 5px 12px;
+    border-radius: 4px; border: 1px solid var(--line); cursor: default;
+  }
+  .mode-chip.advise { color: var(--amber); border-color: var(--amber); }
+  .mode-chip.auto { color: var(--green); border-color: var(--green); }
+  .btn {
+    background: var(--accent-2); color: var(--text); border: none; cursor: pointer;
+    padding: 6px 14px; border-radius: 4px; font-size: 13px; font-weight: 600;
+  }
+  .btn:hover { background: var(--accent); }
+  .btn.ghost { background: transparent; border: 1px solid var(--line); color: var(--muted); }
+  .btn.ghost:hover { color: var(--text); border-color: var(--accent); }
+  .conn { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+  .conn .led { display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+               margin-right: 5px; background: var(--muted); }
+  .conn.ok .led { background: var(--green); box-shadow: 0 0 8px var(--green); }
+  .conn.err .led { background: var(--red); }
+
+  /* ---------- stats strip ---------- */
+  .stats {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;
+    padding: 16px 22px 4px;
+  }
+  .stat {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
+    padding: 12px 16px;
+  }
+  .stat .v { font-size: 26px; font-weight: 700; font-family: var(--mono); }
+  .stat .l { color: var(--muted); font-size: 11px; text-transform: uppercase;
+             letter-spacing: 1.5px; margin-top: 2px; }
+  .stat.bad .v { color: var(--red); }
+  .stat.good .v { color: var(--green); }
+  .stat.acc .v { color: var(--accent); }
+
+  /* ---------- main grid ---------- */
+  main {
+    display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+    gap: 16px; padding: 14px 22px 30px;
+  }
+  @media (max-width: 980px) { main { grid-template-columns: 1fr; } .stats { grid-template-columns: repeat(2, 1fr); } }
+
+  .panel {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
+    display: flex; flex-direction: column; min-height: 340px;
+  }
+  .panel-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 16px; border-bottom: 1px solid var(--line);
+    font-weight: 700; letter-spacing: 1px; font-size: 12px;
+    text-transform: uppercase; color: var(--muted);
+  }
+  .panel-body { padding: 14px 16px; overflow-y: auto; flex: 1; }
+
+  /* ---------- service cards ---------- */
+  .svc {
+    background: var(--panel-2); border: 1px solid var(--line); border-radius: 6px;
+    padding: 14px 16px; margin-bottom: 12px; position: relative;
+  }
+  .svc.compliant { border-left: 3px solid var(--green); }
+  .svc.drifting { border-left: 3px solid var(--red); animation: pulse 2s infinite; }
+  .svc.orphaned { border-left: 3px solid var(--amber); }
+  @keyframes pulse { 0%,100% { box-shadow: 0 0 0 rgba(224,82,96,0); } 50% { box-shadow: 0 0 18px rgba(224,82,96,0.25); } }
+
+  .svc-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .svc-name { font-weight: 700; font-size: 15px; }
+  .pill {
+    font-family: var(--mono); font-size: 10px; padding: 3px 8px; border-radius: 3px;
+    text-transform: uppercase; letter-spacing: 1px;
+  }
+  .pill.compliant { background: rgba(63,182,139,0.15); color: var(--green); }
+  .pill.drifting { background: rgba(224,82,96,0.15); color: var(--red); }
+  .pill.orphaned { background: rgba(224,163,78,0.15); color: var(--amber); }
+  .svc .rows { font-family: var(--mono); font-size: 12px; color: var(--muted); line-height: 1.8; }
+  .svc .rows b { color: var(--text); font-weight: 600; }
+  .svc .rows .bad { color: var(--red); }
+  .replica-bar { display: inline-flex; gap: 3px; margin-left: 6px; vertical-align: middle; }
+  .replica-bar i { width: 9px; height: 9px; border-radius: 2px; background: var(--green); display: inline-block; }
+  .replica-bar i.off { background: #26364d; }
+  .drift-line {
+    font-family: var(--mono); font-size: 11.5px; color: var(--red);
+    margin-top: 6px; padding-top: 6px; border-top: 1px dashed var(--line);
+  }
+  .drift-line .kind { color: var(--amber); }
+
+  /* ---------- timeline ---------- */
+  .event { display: flex; gap: 10px; padding: 7px 2px; border-bottom: 1px solid rgba(30,51,80,0.5); }
+  .event .dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
+  .sev-critical .dot, .sev-error .dot { background: var(--red); }
+  .sev-warning .dot { background: var(--amber); }
+  .sev-ok .dot { background: var(--green); }
+  .sev-info .dot { background: var(--accent); }
+  .event .meta { font-family: var(--mono); font-size: 10.5px; color: var(--muted); }
+  .event .etype { font-family: var(--mono); font-size: 12px; font-weight: 600; }
+  .sev-critical .etype, .sev-error .etype { color: var(--red); }
+  .sev-warning .etype { color: var(--amber); }
+  .sev-ok .etype { color: var(--green); }
+  .sev-info .etype { color: var(--accent); }
+  .event .note { color: var(--muted); font-size: 12px; }
+
+  footer { padding: 12px 22px; color: var(--muted); font-size: 11px;
+           border-top: 1px solid var(--line); display: flex; gap: 18px; }
+  .empty { color: var(--muted); font-size: 12px; padding: 8px 0; }
+  .hint { font-size: 11px; color: var(--muted); margin-top: 6px; }
+  #confirm-overlay {
+    position: fixed; inset: 0; background: rgba(10,22,40,0.8); z-index: 50;
+    display: none; align-items: center; justify-content: center;
+  }
+  #confirm-overlay .box {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
+    padding: 24px; max-width: 460px;
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <span class="dot"></span>
+    <span class="name">MOOR</span>
+    <span class="tag">desired-state control plane · <span id="project-name">—</span></span>
+  </div>
+  <div class="spacer"></div>
+  <span class="mode-chip advise" id="mode-chip">ADVISE</span>
+  <button class="btn" id="mode-btn" title="Switch reconciliation mode">Arm auto-remediation</button>
+  <button class="btn ghost" id="reconcile-btn" title="Run one reconcile cycle now">Reconcile now</button>
+  <span class="conn" id="conn"><span class="led"></span><span id="conn-text">connecting…</span></span>
+</header>
+
+<div class="stats">
+  <div class="stat good"><div class="v" id="stat-services">—</div><div class="l">services monitored</div></div>
+  <div class="stat bad"><div class="v" id="stat-drift">—</div><div class="l">drifting services</div></div>
+  <div class="stat acc"><div class="v" id="stat-events">—</div><div class="l">events in audit trail</div></div>
+  <div class="stat acc"><div class="v" id="stat-mttr">—</div><div class="l">last repair (detect→fix)</div></div>
+</div>
+
+<main>
+  <section class="panel">
+    <div class="panel-head"><span>Managed services · desired vs actual</span>
+      <span class="hint" id="loop-info">loop —s</span></div>
+    <div class="panel-body" id="services"><div class="empty">loading…</div></div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head"><span>Live event timeline</span><span class="hint">SSE stream</span></div>
+    <div class="panel-body" id="timeline"><div class="empty">waiting for events…</div></div>
+  </section>
+</main>
+
+<footer>
+  <span>Every value on this page is derived from the Docker Engine API — no synthetic indicators.</span>
+  <span id="footer-docker">docker: —</span>
+</footer>
+
+<div id="confirm-overlay">
+  <div class="box">
+    <h3 style="margin-bottom:10px;">Arm auto-remediation?</h3>
+    <p style="color:var(--muted); line-height:1.6; font-size:13px;">
+      In <b style="color:var(--green)">auto</b> mode Moor will <b>mutate your Docker environment</b>:
+      remove rogue containers, recreate drifted ones, and start missing ones —
+      exactly as declared in the compose file.
+    </p>
+    <div style="margin-top:18px; display:flex; gap:10px; justify-content:flex-end;">
+      <button class="btn ghost" onclick="hideConfirm()">Cancel</button>
+      <button class="btn" onclick="confirmMode()">Arm auto mode</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g,
+  c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+let state = null;
+let lastDriftDetectedTs = null;
+let lastDriftResolvedTs = null;
+
+// ---------- state polling ----------
+async function refresh() {
+  try {
+    const r = await fetch('/api/state');
+    if (!r.ok) throw new Error('bad status');
+    state = await r.json();
+    $('conn').className = 'conn ok';
+    $('conn-text').textContent = 'engine online';
+    render(state);
+  } catch (e) {
+    $('conn').className = 'conn err';
+    $('conn-text').textContent = 'engine unreachable';
+  }
+}
+
+function render(s) {
+  $('project-name').textContent = s.project;
+  $('loop-info').textContent = `loop ${s.interval}s · ${esc(s.compose.split('/').pop() || '')}`;
+  const services = s.services || [];
+  const drifting = services.filter(x => x.status !== 'compliant');
+  $('stat-services').textContent = services.length;
+  $('stat-drift').textContent = drifting.length;
+  $('stat-events').textContent = '…';
+  fetch('/api/events?limit=1').then(r => r.json()).then(d => {
+    $('stat-events').textContent = d.events.length ? d.events[0].id : 0;
+  }).catch(() => {});
+
+  const chip = $('mode-chip');
+  chip.textContent = s.mode.toUpperCase();
+  chip.className = 'mode-chip ' + s.mode;
+  $('mode-btn').textContent = s.mode === 'auto' ? 'Disarm (advise only)' : 'Arm auto-remediation';
+
+  $('services').innerHTML = services.map(svc => {
+    const driftLines = (svc.drift_items || []).map(it =>
+      `<div class="drift-line">~ <span class="kind">${esc(it.kind)}</span> ${esc(it.message)}</div>`
+    ).join('');
+    const actualImg = (svc.images_actual || []).join(', ') || 'none';
+    const imgBad = svc.image_desired && !(svc.images_actual || []).includes(svc.image_desired);
+    const replicas = Math.max(svc.replicas_desired, svc.replicas_actual);
+    let bars = '';
+    for (let i = 0; i < replicas; i++) {
+      bars += `<i class="${i < svc.replicas_actual ? '' : 'off'}"></i>`;
+    }
+    return `
+    <div class="svc ${svc.status}">
+      <div class="svc-head">
+        <span class="svc-name">${esc(svc.name)}</span>
+        <span class="pill ${svc.status}">${svc.status}</span>
+      </div>
+      <div class="rows">
+        image&nbsp;&nbsp;&nbsp;<b>${esc(svc.image_desired || '(not declared)')}</b>${imgBad ? ' <span class="bad">≠ ' + esc(actualImg) + '</span>' : ''}
+        <br>replicas <b>${svc.replicas_actual}/${svc.replicas_desired}</b><span class="replica-bar">${bars}</span>
+        <br>env&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>${(svc.env_desired || []).length} declared</b>
+      </div>
+      ${driftLines}
+    </div>`;
+  }).join('') || '<div class="empty">no managed services</div>';
+}
+
+// ---------- SSE timeline ----------
+const evtSource = new EventSource('/api/stream');
+evtSource.onopen = () => { $('conn').className = 'conn ok'; };
+evtSource.onerror = () => { $('conn').className = 'conn err'; $('conn-text').textContent = 'stream lost'; };
+evtSource.onmessage = (ev) => handleEvent(JSON.parse(ev.data));
+['drift.detected', 'drift.resolved', 'converge.planned', 'drift.persistent',
+ 'action.ok', 'action.failed', 'mode.changed', 'alert.sent', 'engine.started'].forEach(t => {
+  evtSource.addEventListener(t, (ev) => handleEvent(JSON.parse(ev.data)));
+});
+
+function handleEvent(row) {
+  const box = $('timeline');
+  const emptyEl = box.querySelector('.empty');
+  if (emptyEl) emptyEl.remove();
+  const ts = new Date((row.ts || 0) * 1000).toLocaleTimeString();
+  const payload = row.payload || {};
+  let note = payload.summary || payload.message || payload.title || payload.error || '';
+  if (payload.container_name) note = payload.container_name + (note ? ' — ' + note : '');
+  const div = document.createElement('div');
+  div.className = `event sev-${row.severity || 'info'}`;
+  div.innerHTML = `
+    <span class="dot"></span>
+    <div>
+      <div><span class="etype">${esc(row.type)}</span> <span class="meta">${esc(ts)} · ${esc(row.service || '—')}</span></div>
+      ${note ? `<div class="note">${esc(note)}</div>` : ''}
+    </div>`;
+  box.prepend(div);
+  while (box.children.length > 120) box.removeChild(box.lastChild);
+
+  if (row.type === 'drift.detected') lastDriftDetectedTs = row.ts;
+  if (row.type === 'drift.resolved') {
+    lastDriftResolvedTs = row.ts;
+    if (lastDriftDetectedTs) {
+      const dt = row.ts - lastDriftDetectedTs;
+      $('stat-mttr').textContent = dt.toFixed(1) + 's';
+    }
+  }
+}
+
+// ---------- controls ----------
+$('mode-btn').onclick = () => {
+  const current = state ? state.mode : 'advise';
+  if (current === 'advise') {
+    $('confirm-overlay').style.display = 'flex';
+  } else {
+    postMode('advise');
+  }
+};
+function hideConfirm() { $('confirm-overlay').style.display = 'none'; }
+function confirmMode() { hideConfirm(); postMode('auto'); }
+async function postMode(mode) {
+  await fetch('/api/mode', {method: 'POST', headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({mode})});
+  refresh();
+}
+$('reconcile-btn').onclick = async () => {
+  $('reconcile-btn').textContent = 'Reconciling…';
+  try { await fetch('/api/reconcile', {method: 'POST'}); } catch (e) {}
+  $('reconcile-btn').textContent = 'Reconcile now';
+  refresh();
+};
+
+// ---------- docker info in footer ----------
+fetch('/api/health').then(r => r.json()).then(h => {
+  $('footer-docker').textContent = h.docker && h.docker.ok
+    ? `docker ${h.docker.version} · ${h.docker.containers} containers on host`
+    : 'docker: unreachable';
+}).catch(() => {});
+
+refresh();
+setInterval(refresh, 2000);
+</script>
+</body>
+</html>

@@ -1,0 +1,46 @@
+# Test compose stack mirroring the demo compose file.
+name: moordemo
+
+services:
+  web:
+    image: nginx:1.27-alpine
+    ports:
+      - "8081:80"
+    environment:
+      MOOR_TIER: frontend
+    labels:
+      moor.manage: "true"
+    networks:
+      - frontend
+
+  cache:
+    image: redis:7.2-alpine
+    environment:
+      REDIS_MODE: cache
+    labels:
+      moor.manage: "true"
+    networks:
+      - frontend
+      - backend
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_PASSWORD: demo
+      POSTGRES_DB: appdb
+    labels:
+      moor.manage: "true"
+    networks:
+      - backend
+
+  moor:
+    image: moor:local
+    labels:
+      moor.manage: "false"
+    networks:
+      - control
+
+networks:
+  frontend: {}
+  backend: {}
+  control: {}

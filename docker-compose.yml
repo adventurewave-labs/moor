@@ -1,0 +1,124 @@
+# Moor demo stack.
+#
+# The three services below (web, cache, db) are the MANAGED WORKLOADS:
+# they simulate a small production-like environment declared in this file.
+#
+# The control plane (moor, moor-db, alert-sink) is EXCLUDED from management
+# via moor.manage=false so the reconciler can never fight the components
+# it depends on.
+#
+# Workloads intentionally have NO restart policy: a killed container stays
+# down until Moor restores it - exactly the drift scenario the demo proves.
+#
+# Project name is pinned so container labels are deterministic.
+
+name: moordemo
+
+services:
+  # ---------------------------------------------------------------- workloads
+  web:
+    image: nginx:1.27-alpine
+    ports:
+      - "8081:80"
+    environment:
+      MOOR_TIER: frontend
+    labels:
+      moor.manage: "true"
+    networks:
+      - frontend
+
+  cache:
+    image: redis:7.2-alpine
+    # Demo affordance (Act 5 of `make demo`): intended change = scale to 3.
+    # The demo script uncomments these two lines to move the declaration,
+    # and Moor converges the live environment - GitOps for compose.
+    # deploy:
+    #   replicas: 3
+    environment:
+      REDIS_MODE: cache
+    labels:
+      moor.manage: "true"
+    networks:
+      - frontend
+      - backend
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_PASSWORD: demo
+      POSTGRES_DB: appdb
+    labels:
+      moor.manage: "true"
+    networks:
+      - backend
+
+  # ------------------------------------------------------------ control plane
+  moor-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_PASSWORD: moor
+      POSTGRES_DB: moor
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    restart: unless-stopped
+    labels:
+      moor.manage: "false"
+    networks:
+      - control
+
+  moor:
+    build: ./control-plane
+    volumes:
+      # The Docker socket is the source of ACTUAL state.
+      - /var/run/docker.sock:/var/run/docker.sock
+      # This compose file, read-only, is the source of DESIRED state.
+      - ./docker-compose.yml:/desired-state/docker-compose.yml:ro
+    environment:
+      MOOR_PROJECT: moordemo
+      MOOR_COMPOSE: /desired-state/docker-compose.yml
+      MOOR_MODE: advise
+      MOOR_INTERVAL: "5"
+      MOOR_ALERT_WEBHOOK: http://alert-sink:9099/webhook
+      MOOR_DB_URL: postgresql+psycopg://moor:moor@moor-db:5432/moor
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    depends_on:
+      moor-db:
+        condition: service_healthy
+    labels:
+      moor.manage: "false"
+    networks:
+      - control
+
+  alert-sink:
+    build: ./alert-sink
+    ports:
+      - "9099:9099"
+    restart: unless-stopped
+    labels:
+      moor.manage: "false"
+    networks:
+      - control
+
+  drift-injector:
+    build: ./drift-injector
+    profiles:
+      - chaos
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      MOOR_PROJECT: moordemo
+    command: ["inject", "--help"]
+    labels:
+      moor.manage: "false"
+    networks:
+      - control
+
+networks:
+  frontend: {}
+  backend: {}
+  control: {}

@@ -1,0 +1,56 @@
+[
+  {
+    "url": "https://dora.dev/research/2024/dora-report",
+    "name": "Accelerate State of DevOps Report 2024 - DORA",
+    "snippet": "Apr 13, 2026 · Infrastructure flexibility remains essential: Leveraging flexible cloud infrastructure directly increases organizational performance.",
+    "host_name": "dora.dev",
+    "rank": 0,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://cloud.google.com/blog/products/devops-sre/announcing-the-2024-dora-report",
+    "name": "Announcing the 2024 DORA report | Google Cloud Blog",
+    "snippet": "Oct 22, 2024 · A 25% increase in AI adoption is associated with improvements in several key areas: 7.5% increase in documentation quality 3.4% increase in ...",
+    "host_name": "cloud.google.com",
+    "rank": 1,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.linkedin.com/pulse/what-2024-dora-state-devops-report-doesnt-tell-you-force-panthofer-mh4cc",
+    "name": "What the 2024 DORA State of DevOps Report Doesn't Tell You",
+    "snippet": "Nov 22, 2024 · The DORA report emphasizes the significance of flexible, scalable infrastructure for elite performance.",
+    "host_name": "www.linkedin.com",
+    "rank": 2,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.infoq.com/news/2024/11/2024-dora-report",
+    "name": "2024 Accelerate State of DevOps Report Shows Pros and Cons of AI",
+    "snippet": "Nov 28, 2024 · The data showed a drop in throughput (1.5%) and stability (7.2%) for environments where AI had been adopted.",
+    "host_name": "www.infoq.com",
+    "rank": 3,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://getdx.com/blog/dora-metrics",
+    "name": "The complete guide to DORA metrics in the AI era - DX",
+    "snippet": "Jul 13, 2026 · DORA metrics are four measures of software delivery performance, deployment frequency, lead time for changes, change failure rate, and mean time ...",
+    "host_name": "getdx.com",
+    "rank": 4,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.gitclear.com/research/google_dora_2024_summary_ai_impact",
+    "name": "Distilled summary of 2024/2025 Google DORA Report - GitClear",
+    "snippet": "May 25, 2025 · We found some positive results. Internal developer platform users had 8% higher levels of individual productivity and 10% higher levels of team ...",
+    "host_name": "www.gitclear.com",
+    "rank": 5,
+    "date": "",
+    "favicon": ""
+  }
+]

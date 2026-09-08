@@ -1,0 +1,56 @@
+[
+  {
+    "url": "https://upsun.com/blog/environment-parity-platform-problem",
+    "name": "Eliminate the \"repro gap\" with environment parity",
+    "snippet": "May 11, 2026 — Stop debugging infrastructure drift . Use a single configuration to ensure every environment is identical, from local dev to production , ...",
+    "host_name": "upsun.com",
+    "rank": 0,
+    "date": "May 11, 2026",
+    "favicon": ""
+  },
+  {
+    "url": "https://oneuptime.com/blog/post/2026-01-24-environment-parity-issues/view",
+    "name": "How to Fix 'Environment Parity' Issues",
+    "snippet": "Jan 24, 2026 — Learn how to achieve environment parity between development, staging, and production to reduce deployment failures and catch bugs earlier in ...",
+    "host_name": "oneuptime.com",
+    "rank": 1,
+    "date": "Jan 24, 2026",
+    "favicon": ""
+  },
+  {
+    "url": "https://rafftechnologies.com/learn/guides/dev-staging-production-cloud-environments",
+    "name": "Staging vs Production vs Development Environments",
+    "snippet": "Mar 21, 2026 — Environment parity means keeping development, staging, and production sufficiently similar in runtimes, dependencies, configuration structure, ...",
+    "host_name": "rafftechnologies.com",
+    "rank": 2,
+    "date": "Mar 21, 2026",
+    "favicon": ""
+  },
+  {
+    "url": "https://softwareengineering.stackexchange.com/questions/433023/dev-prod-parity-and-microservices",
+    "name": "development process - Dev/prod parity and microservices",
+    "snippet": "Oct 26, 2021 — According to the 12-factor-app dev/prod parity principle, the developers' local environments and production should be similar. For developers working ...",
+    "host_name": "softwareengineering.stackexchange.com",
+    "rank": 3,
+    "date": "Oct 26, 2021",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.reddit.com/r/ExperiencedDevs/comments/1aue09h/staging_setup_whats_the_best",
+    "name": "Staging Setup - what's the \"best\"? : r/ExperiencedDevs",
+    "snippet": "I have worked at a few companies with staging environments, and they all seem to do it differently. I know there are a lot of \"it depends\", but I'd like ...",
+    "host_name": "www.reddit.com",
+    "rank": 4,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://medium.com/@aludanyi/the-environment-problem-on-development-environments-local-setup-and-the-parity-gap-ed85793e9998",
+    "name": "The Environment Problem: On Development",
+    "snippet": "Between the development environment and production lies a layer of environments — staging , Configuration drift is the second: staging ...",
+    "host_name": "medium.com",
+    "rank": 5,
+    "date": "",
+    "favicon": ""
+  }
+]

@@ -1,0 +1,74 @@
+[
+  {
+    "url": "https://octopus.com/devops/configuration-management/configuration-drift",
+    "name": "Configuration Drift: Causes, Examples, Risks, And Best Practices",
+    "snippet": "Unmanaged configuration drift can directly lead to outages and reliability issues. Minor discrepancies between primary and backup systems can result in ...",
+    "host_name": "octopus.com",
+    "rank": 0,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://maddevs.io/glossary/configuration-drift",
+    "name": "What Is Configuration Drift? | DevOps Glossary Terms - Mad Devs",
+    "snippet": "Downtime—Upwards of $5,600 per minute, according to Gartner's 2014 estimate. · Security breaches—The average data breach cost reached $4.24 million globally in ...",
+    "host_name": "maddevs.io",
+    "rank": 1,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.puppet.com/blog/configuration-drift",
+    "name": "Configuration Drift: How It Happens, Top Sources + How to  - Puppet",
+    "snippet": "Nov 7, 2023 · Specific side effects of configuration drift include app failure, downtime, prolonged development lifecycles, increased IT tickets, security ...",
+    "host_name": "www.puppet.com",
+    "rank": 2,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.reddit.com/r/devops/comments/1rsnzne/how_do_you_detect_configuration_drift_between",
+    "name": "How do you detect configuration drift between environments? - Reddit",
+    "snippet": "Mar 13, 2026 · I'm curious how teams here detect configuration drift between environments like prod, staging, and test. In several projects I've worked on…",
+    "host_name": "www.reddit.com",
+    "rank": 3,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.ibm.com/think/topics/configuration-drift",
+    "name": "Configuration Drift: What It Is, Why It Happens & How to Fix It | IBM",
+    "snippet": "Apr 29, 2026 · Configuration drift is most commonly caused by manual changes to system configurations, automation going wrong, issues at the organizational ...",
+    "host_name": "www.ibm.com",
+    "rank": 4,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.youtube.com/watch?v=gIQqpKQnK-0",
+    "name": "Configuration Drift Explained: Why Staging Environments Fail",
+    "snippet": "May 16, 2026 · Configuration drift happens when staging and production environments gradually become misaligned, leading to unreliable testing, ...",
+    "host_name": "www.youtube.com",
+    "rank": 5,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.josys.com/article/article-saas-security-why-configuration-drift-is-a-growing-concern-for-it-managers-in-2025",
+    "name": "Why Configuration Drift Is a Growing Concern for IT Managers in 2025",
+    "snippet": "Unaddressed configuration drift can lead to security vulnerabilities, compliance issues, and operational inefficiencies that impact business performance.",
+    "host_name": "www.josys.com",
+    "rank": 6,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://aaltodoc.aalto.fi/bitstreams/6a2f20a2-d7cb-4037-9453-22d28fb0f10a/download",
+    "name": "[PDF] Mitigating configuration drift in infrastructure-as-code systems",
+    "snippet": "Apr 27, 2025 · The longer the deployment of new infrastructure configurations is delayed, the higher the likelihood of failure due to changes in the system, ...",
+    "host_name": "aaltodoc.aalto.fi",
+    "rank": 7,
+    "date": "",
+    "favicon": ""
+  }
+]

@@ -1,0 +1,56 @@
+[
+  {
+    "url": "https://survey.stackoverflow.co/2024/technology",
+    "name": "Technology | 2024 Stack Overflow Developer Survey",
+    "snippet": "Docker is used the most by professional developers (59 %) and npm is used the most by developers learning to code (45%). Which developer tools for compiling, ... Read more",
+    "host_name": "survey.stackoverflow.co",
+    "rank": 0,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://survey.stackoverflow.co/2025",
+    "name": "2025 Stack Overflow Developer Survey",
+    "snippet": "It saw a 7 percentage point increase from 2024 to 2025; , positive sentiment for AI tools has decreased in 2025: 70%+ in 2023 and 2024 to just 60% this year.",
+    "host_name": "survey.stackoverflow.co",
+    "rank": 1,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.reddit.com/r/programming/comments/1mdyy9x/stack_overflow_survey_2025_84_of_devs_use_ai_but",
+    "name": "Stack Overflow Survey 2025: 84% of devs use AI but 46",
+    "snippet": "84% of developers are using AI tools 46% say they don't trust the accuracy of AI output (up from 31% last year!) That's quite the shift. 2024 ...",
+    "host_name": "www.reddit.com",
+    "rank": 2,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://news.ycombinator.com/item?id=41063512",
+    "name": "2024 Stack Overflow Developer Survey",
+    "snippet": "Jul 25, 2024 — I have an ok idea of what Docker is and what i want to do with it. ... I wonder what the combined percentage of Linux usage is for personal use . Read more",
+    "host_name": "news.ycombinator.com",
+    "rank": 3,
+    "date": "Jul 25, 2024",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.docker.com/blog/docker-stack-overflow-survey-thank-you-2024",
+    "name": "Thank You to the Stack Overflow Community for Ranking",
+    "snippet": "Aug 7, 2024 — Stack Overflow recently unveiled the 2024 Developer Survey results. Docker is the most-used tool … developers, with 59% using it in their work.",
+    "host_name": "www.docker.com",
+    "rank": 4,
+    "date": "Aug 7, 2024",
+    "favicon": ""
+  },
+  {
+    "url": "https://meta.stackoverflow.com/questions/430298/the-2024-developer-survey",
+    "name": "The 2024 Developer Survey",
+    "snippet": "July 24, 2024 Update: The 2024 Dev Survey results are now live! We want to thank everyone again for their participation and cannot wait to see you next ...",
+    "host_name": "meta.stackoverflow.com",
+    "rank": 5,
+    "date": "",
+    "favicon": ""
+  }
+]

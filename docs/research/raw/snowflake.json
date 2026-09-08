@@ -1,0 +1,56 @@
+[
+  {
+    "url": "https://www.reddit.com/r/dataengineering/comments/14k02k6/anyone_experiencing_insane_costs_with_snowflake",
+    "name": "Anyone experiencing insane costs with Snowflake in large  - Reddit",
+    "snippet": "Jun 27, 2023 · Snowflake.Account_Usage schema should provide you with detailed cost data to identify the problem areas easily. You can do it Does anyone think the cost of Snowflake is a problem? - Reddit Snowflake users: What are your biggest \"hidden\" cost surprises or ... More results from www.reddit.com",
+    "host_name": "www.reddit.com",
+    "rank": 0,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.snowflake.com/en/pricing-options",
+    "name": "Snowflake Pricing | Choose the Right Edition for Your Data Needs",
+    "snippet": "We keep pricing simple with a consumption-based pricing model. Explore the details of our pricing model and how you can easily understand costs.",
+    "host_name": "www.snowflake.com",
+    "rank": 1,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.snowflake.com/en/developers/guides/operational-excellence",
+    "name": "Operational Excellence - Snowflake",
+    "snippet": "Automate infrastructure & maintenance. Eliminate manual operational tasks by codifying all infrastructure, configuration, and data pipelines, leveraging ... Principles · Manage The Software... · Adopt Gitops For All...",
+    "host_name": "www.snowflake.com",
+    "rank": 2,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.revefi.com/blog/avoiding-snowflake-data-cost-pitfalls",
+    "name": "9 Pitfalls in Snowflake Data Cost Management & How to Avoid them",
+    "snippet": "Mar 23, 2026 · Revefi automates the tedious, error-prone parts of managing Snowflake cloud costs. This means your team can focus less on manual adjustments ...",
+    "host_name": "www.revefi.com",
+    "rank": 3,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.unraveldata.com/insights/snowflake-optimization",
+    "name": "How Can Snowflake Optimization Bring Down My Cloud Costs?",
+    "snippet": "Jul 21, 2025 · Strategic snowflake optimization cuts cloud costs 40-70%. Learn query tuning and resource management techniques that reduce expenses across ...",
+    "host_name": "www.unraveldata.com",
+    "rank": 4,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://data.folio3.com/blog/snowflake-pricing",
+    "name": "Snowflake Pricing Explained: Costs, Credits & Real Examples - folio3",
+    "snippet": "Nov 28, 2025 · Query optimization often delivers 50-80% cost reductions without requiring infrastructure changes.",
+    "host_name": "data.folio3.com",
+    "rank": 5,
+    "date": "",
+    "favicon": ""
+  }
+]

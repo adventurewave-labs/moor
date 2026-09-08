@@ -1,0 +1,74 @@
+[
+  {
+    "url": "https://safeguard.sh/resources/blog/best-infrastructure-drift-detection-tools",
+    "name": "Best Infrastructure Drift Detection Tools (2026 Guide)",
+    "snippet": "Jul 9, 2026 — A practical buyer's guide to infrastructure drift detection tools , comparing Terraform Cloud, Spacelift, env0, driftctl -style OSS, and ...",
+    "host_name": "safeguard.sh",
+    "rank": 0,
+    "date": "Jul 9, 2026",
+    "favicon": ""
+  },
+  {
+    "url": "https://scalr.com/learning-center/terraform-drift-detection-how-to-prevent-and-remediate",
+    "name": "Terraform Drift Detection Tools: Compare, Prevent & Fix",
+    "snippet": "Mar 6, 2026 — Compare Terraform drift detection tools and learn to detect, prevent, and remediate infrastructure drift with scheduled plans, ...",
+    "host_name": "scalr.com",
+    "rank": 1,
+    "date": "Mar 6, 2026",
+    "favicon": ""
+  },
+  {
+    "url": "https://snyk.io/blog/tools-infrastructure-drift-detection",
+    "name": "Tools for infrastructure drift detection",
+    "snippet": "Mar 15, 2022 — 7Terraform has compared your real infrastructure against your configuration and found no differences , so no changes are needed.",
+    "host_name": "snyk.io",
+    "rank": 2,
+    "date": "Mar 15, 2022",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.reddit.com/r/devops/comments/18ba8xq/open_source_tools_to_detect_infrastructure_change",
+    "name": "Open Source tools to detect infrastructure change : r/devops",
+    "snippet": "It includes drift detection features that compare your Terraform configurations with the deployed infrastructure , identifying any discrepancies. Read more",
+    "host_name": "www.reddit.com",
+    "rank": 3,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.envzero.com/blog/8-terraform-drift-detection-tools-enterprise-teams-actually-use-in-2026",
+    "name": "8 Terraform Drift Detection Tools Enterprise Teams Actually",
+    "snippet": "8 days ago — Eight Terraform drift detection tools compared on what they actually catch, what they cost to run, and where each fits an enterprise IaC ...",
+    "host_name": "www.envzero.com",
+    "rank": 4,
+    "date": "Aug 30, 2026",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.firefly.ai/academy/terraform-and-kubernetes-monitoring-drift-in-clusters",
+    "name": "Terraform and Kubernetes: Monitoring Drift in Clusters - Firefly",
+    "snippet": "Discover how to detect and prevent configuration drift in Kubernetes clusters with Terraform , keeping resources aligned to state.",
+    "host_name": "www.firefly.ai",
+    "rank": 5,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.hashicorp.com/en/blog/detecting-and-managing-drift-with-terraform",
+    "name": "Detecting and Managing Drift with Terraform",
+    "snippet": "Jun 7, 2018 — This guide explains how to use Terraform to detect and manage configuration drift. real-world drift. Terraform helps detect and manage drift .  ...",
+    "host_name": "www.hashicorp.com",
+    "rank": 6,
+    "date": "Jun 7, 2018",
+    "favicon": ""
+  },
+  {
+    "url": "https://abh1shek.medium.com/implementing-drift-detection-with-driftctl-in-cloud-environments-fa86c5924f31",
+    "name": "Implementing Drift Detection with Driftctl in Cloud Environments",
+    "snippet": "This command configures Driftctl to fetch the live state directly from your cloud environment and compare it against the Terraform state stored ... Read more",
+    "host_name": "abh1shek.medium.com",
+    "rank": 7,
+    "date": "",
+    "favicon": ""
+  }
+]

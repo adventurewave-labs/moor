@@ -1,0 +1,56 @@
+[
+  {
+    "url": "https://www.gartner.com/en/articles/aws-outage-2025",
+    "name": "Don't Let Outages Erode Your Trust in the Cloud",
+    "snippet": "Recently, AWS and Azure experienced outages that caused degraded performance and downtime for many organizations. The October 2025 incident was completely ...",
+    "host_name": "www.gartner.com",
+    "rank": 0,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.opstrails.dev/insights/80-percent-production-outages-self-inflicted",
+    "name": "Why Most Production Outages Are Self-Inflicted | OpsTrails",
+    "snippet": "Dec 2, 2025 — A Gartner RAS Core Research Note projected that 80% of outages impacting mission-critical services would be caused by people and process issues, ... Read more",
+    "host_name": "www.opstrails.dev",
+    "rank": 1,
+    "date": "Dec 2, 2025",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.gartner.com/en/documents/7096330",
+    "name": "AWS October 2025 Outage Isn't a Cause for Panic",
+    "snippet": "Oct 20, 2025 — On 20 October 2025 , AWS experienced a broad service-impacting event in its Northern Virginia region. Organizations should be prepared to handle ... Read more",
+    "host_name": "www.gartner.com",
+    "rank": 2,
+    "date": "Oct 20, 2025",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.crn.com/news/cloud/2025/cloudflare-outage-shouldn-t-prompt-knee-jerk-decisions-gartner",
+    "name": "Cloudflare Outage Shouldn't Prompt 'Knee-Jerk Decisions'",
+    "snippet": "Nov 19, 2025 — In a Gartner analysis Tuesday, the research firm urged IT infrastructure and security leaders to “resist overreactions” to the outage . Read more",
+    "host_name": "www.crn.com",
+    "rank": 3,
+    "date": "Nov 19, 2025",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.netbrain.com/blog/stop-network-outages",
+    "name": "How to Stop Network Outages from Hurting Your Business",
+    "snippet": "Sep 12, 2025 — Gartner identifies: “ Gartner estimates that more than 60% of enterprise network changes are made manually. Further, multiple surveys show that ...",
+    "host_name": "www.netbrain.com",
+    "rank": 4,
+    "date": "Sep 12, 2025",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.gartner.com/en/newsroom/press-releases/2026-02-12-gartner-predicts-that-by-2028-misconfigured-ai-will-shut-down-national-critical-infrastructure-in-a-g20-country",
+    "name": "Gartner Predicts That by 2028 Misconfigured AI Will Shut",
+    "snippet": "Feb 12, 2026 — Misconfigured AI can autonomously shut down vital services, misinterpret sensor data or trigger unsafe actions. This can result in physical ...",
+    "host_name": "www.gartner.com",
+    "rank": 5,
+    "date": "Feb 12, 2026",
+    "favicon": ""
+  }
+]
