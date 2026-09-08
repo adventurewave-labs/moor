@@ -178,6 +178,31 @@ def test_current_state_shape(engine):
     assert state["mode"] == "advise"
 
 
+def test_current_state_omits_unmanaged_orphans(engine, gateway):
+    # Control-plane services (moor.manage=false, no declaration) must not
+    # appear as orphaned rows — caught live in a Codespace run.
+    import time as _time
+
+    from tests.conftest import _next_id
+
+    for svc in ("moor", "moor-db", "alert-sink"):
+        gateway.containers[_next_id()] = {
+            "id": "x", "name": f"{PROJECT}-{svc}-1", "service": svc,
+            "image": "busybox", "env": {}, "command": None, "ports": {},
+            "state": "running",
+            "labels": {
+                "com.docker.compose.project": PROJECT,
+                "com.docker.compose.service": svc,
+                "moor.manage": "false",
+            },
+            "networks": (f"{PROJECT}_control",), "created": _time.time(),
+        }
+    state = engine.current_state()
+    names = {s["name"] for s in state["services"]}
+    assert names == {"web", "cache", "db"}
+    assert all(s["status"] == "compliant" for s in state["services"])
+
+
 def test_planned_actions_empty_when_compliant(engine):
     plan = engine.planned_actions()
     assert plan["count"] == 0

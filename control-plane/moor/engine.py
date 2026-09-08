@@ -149,7 +149,14 @@ class Reconciler:
                 "drift_items": [i.to_json() for i in items],
                 "status": "drifting" if items else "compliant",
             })
-        actual_services = [s for s in actual.services() if desired.service(s) is None]
+        # Orphaned = containers exist with NO declaration AND they are
+        # managed (moor.manage != false). The control plane's own services
+        # opt out of management, so they must not appear as orphans.
+        actual_services = [
+            s for s in actual.services()
+            if desired.service(s) is None
+            and any(c.managed for c in actual.for_service(s))
+        ]
         for orphan in actual_services:
             items = report.for_service(orphan)
             services.append({

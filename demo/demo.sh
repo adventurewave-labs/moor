@@ -88,7 +88,8 @@ $CLI status
 echo
 $CLI plan
 echo
-ALERTS=$(curl -s http://localhost:9099/api/alerts | python3 -c 'import json,sys; print(json.load(sys.stdin)["count"])' 2>/dev/null || echo "?")
+ALERTS=$(curl -s http://localhost:9099/api/alerts | grep -oE '"count": *[0-9]+' | grep -oE '[0-9]+' | head -1)
+[ -n "${ALERTS:-}" ] || ALERTS="?"
 note "alert sink received ${ALERTS} webhook card(s) — see http://localhost:9099"
 warn "nothing was repaired: that is today's status quo — visibility without control."
 
@@ -96,7 +97,11 @@ warn "nothing was repaired: that is today's status quo — visibility without co
 banner "ACT 3 — Control: arm auto-remediation"
 $CLI mode auto
 echo
-note "injecting drift again — and this time Moor repairs it:"
+note "armed: Moor immediately repairs the Act 2 drift (no human touched anything)..."
+wait_compliant
+$CLI status
+echo
+note "now inject FRESH drift — Moor must repair it in seconds:"
 docker compose run --rm drift-injector inject kill --service web
 docker compose run --rm drift-injector inject scale --service cache --count 4
 echo
