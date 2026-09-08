@@ -42,6 +42,7 @@ class DockerGateway:
         self.project = project
         self._client = client or docker.from_env(timeout=30)
         self._image_env_cache: dict[str, list[str]] = {}
+        self._image_cmd_cache: dict[str, tuple[str, ...] | None] = {}
 
     # ------------------------------------------------------------ observe
 
@@ -107,6 +108,32 @@ class DockerGateway:
             raw = []
         self._image_env_cache[ref] = list(raw)
         return _parse_env(raw)
+
+    def image_cmd(self, image_ref: str) -> tuple[str, ...] | None:
+        """Command baked into the image itself.
+
+        A service that declares no `command` runs the image default; Docker
+        records that effective command on the container, so the diff engine
+        needs the image default to tell a compliant baseline from drift.
+        """
+        ref = normalize_image(image_ref)
+        if ref in self._image_cmd_cache:
+            return self._image_cmd_cache[ref]
+        cmd: list | None = None
+        try:
+            image = self._client.images.get(image_ref)
+            cmd = (image.attrs.get("Config") or {}).get("Cmd")
+        except docker.errors.ImageNotFound:
+            try:
+                pulled = self._client.images.pull(image_ref)
+                cmd = (pulled.attrs.get("Config") or {}).get("Cmd")
+            except docker.errors.DockerException:
+                cmd = None
+        except docker.errors.DockerException:
+            cmd = None
+        result = tuple(cmd) if cmd else None
+        self._image_cmd_cache[ref] = result
+        return result
 
     # ------------------------------------------------------------ mutate
 

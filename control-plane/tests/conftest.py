@@ -34,6 +34,15 @@ IMAGE_ENVS = {
     "postgres:15-alpine": ["PATH=/usr/local/bin", "PGDATA=/var/lib/postgresql/data"],
 }
 
+# Image default commands (what a container runs when compose declares none).
+IMAGE_CMDS = {
+    "nginx:1.27-alpine": ("nginx", "-g", "daemon off;"),
+    "redis:7.2-alpine": ("redis-server",),
+    "redis:6.2-alpine": ("redis-server",),
+    "postgres:16-alpine": ("postgres",),
+    "postgres:15-alpine": ("postgres",),
+}
+
 _ids = itertools.count(1)
 
 
@@ -135,6 +144,9 @@ class FakeGateway:
             k, v = item.split("=", 1)
             out[k] = v
         return out
+
+    def image_cmd(self, image_ref: str) -> tuple[str, ...] | None:
+        return IMAGE_CMDS.get(image_ref)
 
     def engine_info(self) -> dict:
         return {"ok": True, "version": "test", "containers": len(self.containers), "images": len(IMAGE_ENVS)}

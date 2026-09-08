@@ -87,6 +87,34 @@ def test_command_drift_detected(gateway):
     assert DRIFT_COMMAND in kinds
 
 
+def test_image_default_command_is_not_drift(gateway):
+    # Real Docker records the image default command on the container even
+    # when compose declares no command; that baseline must be compliant.
+    # (Caught live in a Codespace against Docker Engine 29.)
+    for r in gateway.containers.values():
+        if not r["command"]:
+            r["command"] = list(gateway.image_cmd(r["image"]) or ())
+    report = diff_states(
+        _desired(), gateway.list_containers(),
+        gateway.image_env, image_cmd_fn=gateway.image_cmd,
+    )
+    assert not report.has_drift
+
+
+def test_overridden_command_still_drifts_with_image_cmd_fn(gateway):
+    for r in gateway.containers.values():
+        if not r["command"]:
+            r["command"] = list(gateway.image_cmd(r["image"]) or ())
+    db = next(r for r in gateway.containers.values() if r["service"] == "db")
+    db["command"] = ["postgres", "--wrong-flag"]
+    report = diff_states(
+        _desired(), gateway.list_containers(),
+        gateway.image_env, image_cmd_fn=gateway.image_cmd,
+    )
+    kinds = {i.kind for i in report.for_service("db")}
+    assert kinds == {DRIFT_COMMAND}
+
+
 def test_port_drift_detected(gateway):
     web = next(r for r in gateway.containers.values() if r["service"] == "web")
     web["ports"] = {"80/tcp": 9999}

@@ -123,7 +123,11 @@ class Reconciler:
     def _observe(self) -> tuple[DesiredState, ActualState, DriftReport]:
         desired = self.compose.current()
         actual = self.gateway.list_containers()
-        report = diff_states(desired, actual, image_env_fn=self.gateway.image_env)
+        report = diff_states(
+            desired, actual,
+            image_env_fn=self.gateway.image_env,
+            image_cmd_fn=getattr(self.gateway, "image_cmd", None),
+        )
         return desired, actual, report
 
     def current_state(self) -> dict:

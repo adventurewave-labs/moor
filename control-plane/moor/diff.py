@@ -37,11 +37,15 @@ def diff_states(
     desired: DesiredState,
     actual: ActualState,
     image_env_fn=None,
+    image_cmd_fn=None,
 ) -> DriftReport:
     """Compare desired against actual and produce a drift report.
 
     ``image_env_fn(ref) -> dict`` supplies image-baked environment so
     injected extra variables can be distinguished from image defaults.
+    ``image_cmd_fn(ref) -> tuple | None`` supplies the image default
+    command so an undeclared ``command:`` is not flagged as drift when the
+    container runs exactly what the image runs by default.
     """
     items: list[DriftItem] = []
 
@@ -80,7 +84,7 @@ def diff_states(
         # ---- per-container spec comparison (kept live containers only)
         kept = live[: svc.replicas]
         for container in kept:
-            items.extend(_diff_container(svc, container, image_env_fn))
+            items.extend(_diff_container(svc, container, image_env_fn, image_cmd_fn))
 
     # ---- orphaned services: containers exist, no declaration
     for service_name in actual.services():
@@ -103,7 +107,7 @@ def diff_states(
     return DriftReport(items=tuple(items))
 
 
-def _diff_container(svc, container: ActualContainer, image_env_fn) -> list[DriftItem]:
+def _diff_container(svc, container: ActualContainer, image_env_fn, image_cmd_fn=None) -> list[DriftItem]:
     items: list[DriftItem] = []
 
     # image
@@ -150,6 +154,16 @@ def _diff_container(svc, container: ActualContainer, image_env_fn) -> list[Drift
     # command
     desired_cmd = list(svc.command) if svc.command else None
     actual_cmd = list(container.command) if container.command else None
+    if desired_cmd is None and actual_cmd is not None and image_cmd_fn is not None:
+        # An undeclared command means "whatever the image runs by default";
+        # Docker records that effective command on the container. Resolve
+        # the image default so a clean baseline is not flagged as drift.
+        try:
+            image_default = list(image_cmd_fn(container.image) or [])
+        except Exception:
+            image_default = None
+        if image_default is not None and actual_cmd == image_default:
+            actual_cmd = None
     if desired_cmd != actual_cmd:
         items.append(
             DriftItem(
