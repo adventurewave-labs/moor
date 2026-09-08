@@ -17,6 +17,8 @@
     --red: #e05260;
     --green: #3fb68b;
     --amber: #e0a34e;
+    --term-bg: #080e1a;
+    --term-bar: #0c1526;
     --mono: 'SFMono-Regular', ui-monospace, Menlo, Consolas, monospace;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -78,7 +80,7 @@
 
   /* ---------- main grid ---------- */
   main {
-    display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+    display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.06fr);
     gap: 16px; padding: 14px 22px 30px;
   }
   @media (max-width: 980px) { main { grid-template-columns: 1fr; } .stats { grid-template-columns: repeat(2, 1fr); } }
@@ -126,20 +128,70 @@
   }
   .drift-line .kind { color: var(--amber); }
 
-  /* ---------- timeline ---------- */
-  .event { display: flex; gap: 10px; padding: 7px 2px; border-bottom: 1px solid rgba(30,51,80,0.5); }
-  .event .dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
-  .sev-critical .dot, .sev-error .dot { background: var(--red); }
-  .sev-warning .dot { background: var(--amber); }
-  .sev-ok .dot { background: var(--green); }
-  .sev-info .dot { background: var(--accent); }
-  .event .meta { font-family: var(--mono); font-size: 10.5px; color: var(--muted); }
-  .event .etype { font-family: var(--mono); font-size: 12px; font-weight: 600; }
-  .sev-critical .etype, .sev-error .etype { color: var(--red); }
-  .sev-warning .etype { color: var(--amber); }
-  .sev-ok .etype { color: var(--green); }
-  .sev-info .etype { color: var(--accent); }
-  .event .note { color: var(--muted); font-size: 12px; }
+  /* ---------- console window ---------- */
+  #console-panel {
+    position: relative; background: var(--term-bg); border: 1px solid var(--line);
+    border-radius: 8px; display: flex; flex-direction: column; min-height: 480px;
+    overflow: hidden;
+  }
+  #console-panel.flash-red { animation: flashRed 1.3s ease-out; }
+  #console-panel.flash-green { animation: flashGreen 1.3s ease-out; }
+  @keyframes flashRed   { 0% { box-shadow: inset 0 0 0 2px var(--red), 0 0 34px rgba(224,82,96,.45); } 100% { box-shadow: none; } }
+  @keyframes flashGreen { 0% { box-shadow: inset 0 0 0 2px var(--green), 0 0 34px rgba(63,182,139,.4); } 100% { box-shadow: none; } }
+
+  .term-bar {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 14px; background: var(--term-bar); border-bottom: 1px solid var(--line);
+    flex-shrink: 0;
+  }
+  .tl { width: 11px; height: 11px; border-radius: 50%; }
+  .tl.r { background: #ff5f56; } .tl.y { background: #ffbd2e; } .tl.g { background: #27c93f; }
+  .term-title { font-family: var(--mono); font-size: 11.5px; color: var(--muted); letter-spacing: .5px; }
+  .live-badge {
+    font-family: var(--mono); font-size: 9.5px; color: var(--red); letter-spacing: 1.5px;
+    border: 1px solid rgba(224,82,96,.45); padding: 1px 7px; border-radius: 3px;
+  }
+  .live-badge::before { content: '●'; margin-right: 5px; animation: blink 1.6s infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  .term-actions { margin-left: auto; display: flex; gap: 8px; }
+  .term-btn {
+    font-family: var(--mono); font-size: 10px; color: var(--muted); cursor: pointer;
+    border: 1px solid var(--line); background: transparent; border-radius: 3px;
+    padding: 3px 9px; letter-spacing: .5px;
+  }
+  .term-btn:hover { color: var(--text); border-color: var(--accent); }
+
+  #console-body {
+    font-family: var(--mono); font-size: 12px; line-height: 1.7;
+    padding: 12px 14px; overflow-y: auto; flex: 1; background: var(--term-bg);
+    scroll-behavior: auto;
+  }
+  .cline { display: flex; gap: 10px; white-space: pre; animation: lineIn .18s ease-out; }
+  @keyframes lineIn { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
+  .cline .cts  { color: #3d546f; flex-shrink: 0; }
+  .cline .ctype { flex-shrink: 0; min-width: 128px; font-weight: 700; }
+  .cline .csvc { flex-shrink: 0; min-width: 54px; color: var(--muted); }
+  .cline .cnote { color: #b6c8db; overflow: hidden; text-overflow: ellipsis; }
+  .cline.sev-critical .ctype, .cline.sev-error .ctype { color: var(--red); }
+  .cline.sev-warning .ctype { color: var(--amber); }
+  .cline.sev-ok .ctype { color: var(--green); }
+  .cline.sev-info .ctype { color: #56a3d6; }
+  .cline.sev-critical .cnote { color: #e8919b; }
+  .cline.sev-ok .cnote { color: #8fd4b8; }
+  .cline.dim { opacity: .5; }
+  .cline.cmd .cprompt { color: var(--accent); font-weight: 700; flex-shrink: 0; }
+  .cline.cmd .cnote { color: var(--accent); }
+  .cline.sep { color: #33465f; margin: 4px 0; user-select: none; }
+  .cursor-line { display: flex; gap: 8px; margin-top: 2px; }
+  .cursor-line .cprompt { color: var(--accent); font-weight: 700; }
+  .caret { width: 8px; height: 15px; background: var(--accent); display: inline-block;
+           animation: blink 1.05s step-end infinite; align-self: center; }
+  #resume-chip {
+    position: absolute; bottom: 46px; right: 18px; display: none;
+    font-family: var(--mono); font-size: 10.5px; color: var(--text); cursor: pointer;
+    background: var(--accent-2); border-radius: 4px; padding: 5px 10px; z-index: 5;
+    box-shadow: 0 4px 14px rgba(0,0,0,.4);
+  }
 
   footer { padding: 12px 22px; color: var(--muted); font-size: 11px;
            border-top: 1px solid var(--line); display: flex; gap: 18px; }
@@ -183,9 +235,17 @@
     <div class="panel-body" id="services"><div class="empty">loading…</div></div>
   </section>
 
-  <section class="panel">
-    <div class="panel-head"><span>Live event timeline</span><span class="hint">SSE stream</span></div>
-    <div class="panel-body" id="timeline"><div class="empty">waiting for events…</div></div>
+  <section id="console-panel">
+    <div class="term-bar">
+      <span class="tl r"></span><span class="tl y"></span><span class="tl g"></span>
+      <span class="term-title">moor — control plane console</span>
+      <span class="live-badge">LIVE</span>
+      <div class="term-actions">
+        <button class="term-btn" id="clear-btn" title="Clear the console view">clear</button>
+      </div>
+    </div>
+    <div id="console-body"></div>
+    <div id="resume-chip" title="Jump to newest output">↓ new events — resume</div>
   </section>
 </main>
 
@@ -218,7 +278,109 @@ let state = null;
 let lastDriftDetectedTs = null;
 let lastDriftResolvedTs = null;
 
-// ---------- state polling ----------
+/* ================= console window ================= */
+const consoleBody = $('console-body');
+let cursorLine = null;
+
+function initConsole() {
+  const prompt = document.createElement('span');
+  prompt.className = 'cprompt';
+  prompt.textContent = 'moor>';
+  const caret = document.createElement('span');
+  caret.className = 'caret';
+  cursorLine = document.createElement('div');
+  cursorLine.className = 'cursor-line';
+  cursorLine.appendChild(prompt);
+  cursorLine.appendChild(caret);
+  consoleBody.appendChild(cursorLine);
+}
+
+function fmtTs(ts) {
+  return new Date((ts || 0) * 1000).toLocaleTimeString([], {hour12: false});
+}
+
+function isPinned() {
+  return consoleBody.scrollHeight - consoleBody.scrollTop - consoleBody.clientHeight < 48;
+}
+
+function appendLine(el) {
+  const pinned = isPinned();
+  consoleBody.insertBefore(el, cursorLine);
+  while (consoleBody.children.length > 400) consoleBody.removeChild(consoleBody.firstChild);
+  if (pinned) consoleBody.scrollTop = consoleBody.scrollHeight;
+  else $('resume-chip').style.display = 'block';
+}
+
+function sepLine(text) {
+  const div = document.createElement('div');
+  div.className = 'cline sep';
+  div.textContent = text;
+  return div;
+}
+
+function eventLine(row, dim) {
+  const payload = row.payload || {};
+  let note = payload.summary || payload.message || payload.title || payload.error || '';
+  if (payload.container_name) note = payload.container_name + (note ? ' — ' + note : '');
+  if (payload.kind) note = payload.kind + (note ? ' — ' + note : '');
+  const div = document.createElement('div');
+  div.className = `cline sev-${row.severity || 'info'}${dim ? ' dim' : ''}`;
+  div.innerHTML =
+    `<span class="cts">${esc(fmtTs(row.ts))}</span>` +
+    `<span class="ctype">${esc(row.type)}</span>` +
+    `<span class="csvc">${esc(row.service || '—')}</span>` +
+    `<span class="cnote">${esc(note)}</span>`;
+  return div;
+}
+
+function cmdLine(text) {
+  const div = document.createElement('div');
+  div.className = 'cline cmd';
+  div.innerHTML =
+    `<span class="cts">${esc(new Date().toLocaleTimeString([], {hour12: false}))}</span>` +
+    `<span class="cprompt">moor></span>` +
+    `<span class="cnote">${esc(text)}</span>`;
+  appendLine(div);
+}
+
+function flash(cls) {
+  const panel = $('console-panel');
+  panel.classList.remove('flash-red', 'flash-green');
+  void panel.offsetWidth; /* restart CSS animation */
+  panel.classList.add(cls);
+  setTimeout(() => panel.classList.remove(cls), 1500);
+}
+
+async function backfillConsole() {
+  try {
+    const r = await fetch('/api/events?limit=60');
+    const d = await r.json();
+    const evs = d.events || [];
+    if (evs.length) {
+      appendLine(sepLine(`── audit trail · last ${evs.length} events (newest at bottom) ──`));
+      evs.forEach(e => appendLine(eventLine(e, true)));
+    } else {
+      appendLine(sepLine('── no events yet · the engine will speak when drift happens ──'));
+    }
+  } catch (e) {
+    appendLine(sepLine('── event store unreachable ──'));
+  }
+  consoleBody.scrollTop = consoleBody.scrollHeight;
+}
+
+$('clear-btn').onclick = () => {
+  while (consoleBody.children.length > 1) consoleBody.removeChild(consoleBody.firstChild);
+  appendLine(sepLine('── console cleared · history lives in the event store ──'));
+};
+$('resume-chip').onclick = () => {
+  consoleBody.scrollTop = consoleBody.scrollHeight;
+  $('resume-chip').style.display = 'none';
+};
+consoleBody.addEventListener('scroll', () => {
+  if (isPinned()) $('resume-chip').style.display = 'none';
+});
+
+/* ================= state polling ================= */
 async function refresh() {
   try {
     const r = await fetch('/api/state');
@@ -277,7 +439,7 @@ function render(s) {
   }).join('') || '<div class="empty">no managed services</div>';
 }
 
-// ---------- SSE timeline ----------
+/* ================= SSE -> console ================= */
 const evtSource = new EventSource('/api/stream');
 evtSource.onopen = () => { $('conn').className = 'conn ok'; };
 evtSource.onerror = () => { $('conn').className = 'conn err'; $('conn-text').textContent = 'stream lost'; };
@@ -288,27 +450,15 @@ evtSource.onmessage = (ev) => handleEvent(JSON.parse(ev.data));
 });
 
 function handleEvent(row) {
-  const box = $('timeline');
-  const emptyEl = box.querySelector('.empty');
-  if (emptyEl) emptyEl.remove();
-  const ts = new Date((row.ts || 0) * 1000).toLocaleTimeString();
-  const payload = row.payload || {};
-  let note = payload.summary || payload.message || payload.title || payload.error || '';
-  if (payload.container_name) note = payload.container_name + (note ? ' — ' + note : '');
-  const div = document.createElement('div');
-  div.className = `event sev-${row.severity || 'info'}`;
-  div.innerHTML = `
-    <span class="dot"></span>
-    <div>
-      <div><span class="etype">${esc(row.type)}</span> <span class="meta">${esc(ts)} · ${esc(row.service || '—')}</span></div>
-      ${note ? `<div class="note">${esc(note)}</div>` : ''}
-    </div>`;
-  box.prepend(div);
-  while (box.children.length > 120) box.removeChild(box.lastChild);
+  appendLine(eventLine(row, false));
 
-  if (row.type === 'drift.detected') lastDriftDetectedTs = row.ts;
+  if (row.type === 'drift.detected') {
+    lastDriftDetectedTs = row.ts;
+    flash('flash-red');
+  }
   if (row.type === 'drift.resolved') {
     lastDriftResolvedTs = row.ts;
+    flash('flash-green');
     if (lastDriftDetectedTs) {
       const dt = row.ts - lastDriftDetectedTs;
       $('stat-mttr').textContent = dt.toFixed(1) + 's';
@@ -316,17 +466,18 @@ function handleEvent(row) {
   }
 }
 
-// ---------- controls ----------
+/* ================= controls ================= */
 $('mode-btn').onclick = () => {
   const current = state ? state.mode : 'advise';
   if (current === 'advise') {
     $('confirm-overlay').style.display = 'flex';
   } else {
+    cmdLine('mode advise');
     postMode('advise');
   }
 };
 function hideConfirm() { $('confirm-overlay').style.display = 'none'; }
-function confirmMode() { hideConfirm(); postMode('auto'); }
+function confirmMode() { hideConfirm(); cmdLine('mode auto'); postMode('auto'); }
 async function postMode(mode) {
   await fetch('/api/mode', {method: 'POST', headers: {'Content-Type': 'application/json'},
                             body: JSON.stringify({mode})});
@@ -334,19 +485,22 @@ async function postMode(mode) {
 }
 $('reconcile-btn').onclick = async () => {
   $('reconcile-btn').textContent = 'Reconciling…';
+  cmdLine('reconcile');
   try { await fetch('/api/reconcile', {method: 'POST'}); } catch (e) {}
   $('reconcile-btn').textContent = 'Reconcile now';
   refresh();
 };
 
-// ---------- docker info in footer ----------
+/* ================= boot ================= */
 fetch('/api/health').then(r => r.json()).then(h => {
   $('footer-docker').textContent = h.docker && h.docker.ok
     ? `docker ${h.docker.version} · ${h.docker.containers} containers on host`
     : 'docker: unreachable';
 }).catch(() => {});
 
+initConsole();
 refresh();
+backfillConsole();
 setInterval(refresh, 2000);
 </script>
 </body>
